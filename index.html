@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#111418">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Impedância">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>Calculadora de Impedância</title>
+<style>
+/* VOICE work tool for an AV installer, technical and calm
+   IDEA the wiring diagram from an installer's reel: speakers stacked, leads from the terminals, total at the output
+   PICTURE live wiring: speakers, red + / blue - / grey series jumpers, output terminals with the total below
+   COLOUR white sheet (graphite at night), ink, wire red, wire blue, jumper grey
+   TYPE Inter Tight 700 + Inter
+   LAYOUT laptop: controls+result left, diagram right, options below; phone: controls, sticky result, diagram, options */
+:root{color-scheme:light dark;--bg:light-dark(#ffffff,#121518);--panel:light-dark(#f2f4f6,#1b1f23);--line:light-dark(#d9dde2,#2c3238);--ink:light-dark(#111418,#eef1f4);--mute:light-dark(#5b6470,#9aa4b0);--red:light-dark(#d7262e,#ff5a5f);--blue:light-dark(#1d5bd8,#5b8dff);--jump:light-dark(#7a828c,#8d97a3);--box:light-dark(#ffffff,#1a1e22);--spk:light-dark(#2a2f35,#3a4149);--rim:light-dark(#454c55,#59616b)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;overflow-x:clip}
+.band{padding:clamp(20px,3vw,40px) max(4vw,16px)}
+h1{font:700 clamp(30px,4vw,44px)/1.05 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;letter-spacing:-.02em;margin:0 0 6px;text-wrap:balance}
+.lede{color:var(--mute);margin:0;max-width:62ch}
+.app{display:grid;gap:20px;grid-template-columns:minmax(0,1fr);max-width:1240px}
+@media(min-width:900px){.app{grid-template-columns:340px minmax(0,1fr)}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px}
+.field{margin-bottom:16px}
+.field>label,.lbl{display:block;font-weight:600;font-size:14px;margin-bottom:6px}
+.step{display:flex;gap:8px;align-items:center}
+.step button,.chip,.opt{font:inherit;color:inherit;cursor:pointer}
+.step button{width:44px;height:44px;border-radius:10px;border:1px solid var(--line);background:var(--box);font-size:22px;line-height:1}
+input[type=number]{font:16px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;height:44px;border-radius:10px;border:1px solid var(--line);background:var(--box);color:var(--ink);padding:0 10px;width:90px;text-align:center}
+.chips{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{min-height:44px;min-width:52px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:var(--box);font-weight:600;white-space:nowrap}
+.chip[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+button:focus-visible,input:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.range{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.unit{color:var(--mute);font-size:14px}
+.result{position:sticky;top:0;z-index:2;background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-top:12px}
+.big{font:700 clamp(44px,8vw,64px)/1 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;letter-spacing:-.02em;white-space:nowrap}
+.rhead{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.cname{font-weight:600;margin:6px 0 4px}
+.calc{color:var(--mute);font-size:14px;margin:0}
+.tag{display:inline-block;font-size:13px;font-weight:600;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.ok{background:var(--ink);color:var(--bg)}
+.low{background:color-mix(in srgb,var(--red) 16%,transparent);color:var(--red)}
+.high{background:color-mix(in srgb,var(--jump) 22%,transparent);color:var(--ink)}
+.diag{display:flex;flex-direction:column;gap:10px}
+.scroll{overflow-x:auto;background:var(--box);border:1px solid var(--line);border-radius:14px;padding:8px}
+.scroll svg{display:block;margin:0 auto}
+svg text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;fill:var(--ink)}
+.legend{display:flex;flex-wrap:wrap;gap:16px;font-size:14px;color:var(--mute)}
+.legend i{display:inline-block;width:22px;height:4px;border-radius:2px;vertical-align:middle;margin-right:6px}
+h2{font:700 22px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;margin:8px 0 10px}
+.opts{display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));max-width:1240px}
+.opt{display:flex;justify-content:space-between;align-items:center;gap:12px;text-align:left;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--box);min-height:56px}
+.opt[aria-pressed=true]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.opt b{font:700 20px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;white-space:nowrap}
+.opt span{display:block}
+.opt small{display:block;color:var(--mute);font-size:13px}
+.note{color:var(--mute);font-size:13px;margin:14px 0 0;max-width:80ch}
+.expbtn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:54px;padding:0 22px;border:0;border-radius:14px;background:var(--red);color:#fff;font:700 17px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;cursor:pointer;box-shadow:0 2px 0 color-mix(in srgb,var(--red) 60%,#000)}
+.expbtn:hover{filter:brightness(1.08)}.expbtn:active{transform:translateY(1px);box-shadow:none}
+@media(max-width:600px){.expbtn{width:100%}}
+.ov{position:fixed;inset:0;z-index:9;background:rgba(0,0,0,.75);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px;color:#fff;text-align:center}
+.ov img{max-width:100%;max-height:75vh;border-radius:8px;background:#fff}
+.ov[hidden]{display:none}
+</style>
+</head>
+<body>
+<header class="band" style="padding-bottom:12px">
+<h1>Calculadora de impedância</h1>
+<p class="lede">Informe quantos alto-falantes e a impedância de cada um. O app mostra todas as ligações série e paralelo possíveis e desenha a fiação.</p>
+</header>
+<main class="band" style="padding-top:8px">
+<div class="app">
+<section>
+<div class="panel">
+<div class="field"><label for="n">Quantidade de alto-falantes</label>
+<div class="step"><button type="button" id="nMinus" aria-label="Diminuir">−</button><input type="number" id="n" min="1" max="32" value="4" inputmode="numeric"><button type="button" id="nPlus" aria-label="Aumentar">+</button></div></div>
+<div class="field"><span class="lbl">Impedância de cada alto-falante</span>
+<div class="chips" id="zChips"></div>
+<div class="range" style="margin-top:8px"><label for="zc" class="unit">Outra:</label><input type="number" id="zc" min="0.5" step="0.5" placeholder="Ω"><span class="unit">Ω</span></div></div>
+<div class="field" style="margin-bottom:0"><span class="lbl">Faixa aceita pelo amplificador</span>
+<div class="range"><input type="number" id="min" min="0.5" step="0.5" value="4" aria-label="Mínimo"><span class="unit">a</span><input type="number" id="max" min="0.5" step="0.5" value="8" aria-label="Máximo"><span class="unit">Ω</span></div></div>
+</div>
+<div class="result" id="result" aria-live="polite"></div>
+</section>
+<section class="diag">
+<div class="scroll" id="fig"></div>
+<div class="legend"><span><i style="background:var(--red)"></i>Positivo (+)</span><span><i style="background:var(--blue)"></i>Negativo (−)</span><span><i style="background:var(--jump)"></i>Jumper série (− de um no + do outro)</span></div>
+<div class="range"><button type="button" class="expbtn" id="exp"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M6 10l6 6 6-6M4 20h16"/></svg>Salvar imagem do esquema</button><span class="unit" id="expMsg" aria-live="polite"></span></div>
+</section>
+</div>
+<h2 id="optTitle">Opções de ligação</h2>
+<div class="opts" id="opts"></div>
+<p class="note">Cálculo para alto-falantes iguais (mesma impedância nominal). A impedância real varia com a frequência; use o valor nominal como referência e respeite o mínimo do amplificador.</p>
+</main>
+<div class="ov" id="ov" hidden><img id="ovImg" alt="Esquema de ligação exportado"><p style="margin:0">Toque e segure a imagem para salvar ou compartilhar.</p><button type="button" class="chip" id="ovClose" style="color:var(--ink)">Fechar</button></div>
+<script>
+{
+const $=id=>document.getElementById(id);
+const ZS=[2,4,6,8,16];
+let st={n:4,z:8,min:4,max:8,sel:null},cur=null;
+try{const s=JSON.parse(localStorage.getItem('imp-calc2')||'null');if(s)st={...st,...s}}catch(e){}
+const save=()=>{try{localStorage.setItem('imp-calc2',JSON.stringify(st))}catch(e){}};
+const fmt=v=>(Math.round(v*100)/100).toLocaleString('pt-BR');
+
+function configs(){
+  const {n,z}=st,out=[];
+  for(let p=1;p<=n;p++){if(n%p)continue;const s=n/p,zt=z*s/p;
+    if(n===1)out.push({k:'s',s:1,p:1,zt,name:'1 alto-falante direto',calc:`Ligação direta: ${fmt(z)} Ω`});
+    else if(p===1)out.push({k:'s',s:n,p:1,zt,name:`${n} em série`,calc:`${n} × ${fmt(z)} Ω = ${fmt(zt)} Ω`});
+    else if(s===1)out.push({k:'p',s:1,p:n,zt,name:`${n} em paralelo`,calc:`${fmt(z)} Ω ÷ ${n} = ${fmt(zt)} Ω`});
+    else{
+      out.push({k:'ps',s,p,zt,name:`${p} linhas de ${s} em série, ligadas em paralelo`,calc:`Cada linha: ${s} × ${fmt(z)} = ${fmt(z*s)} Ω · ${p} linhas em paralelo: ${fmt(z*s)} ÷ ${p} = ${fmt(zt)} Ω`});
+      out.push({k:'sp',s,p,zt,name:`${s} grupos de ${p} em paralelo, ligados em série`,calc:`Cada grupo: ${fmt(z)} ÷ ${p} = ${fmt(z/p)} Ω · ${s} grupos em série: ${s} × ${fmt(z/p)} = ${fmt(zt)} Ω`});
+    }
+  }
+  out.forEach(c=>{c.id=c.k+c.s+'x'+c.p;c.st=c.zt<st.min-1e-9?'low':c.zt>st.max+1e-9?'high':'ok';c.d=c.st==='ok'?0:c.st==='low'?(st.min-c.zt)/st.min*3:(c.zt-st.max)/st.max});
+  return out.sort((a,b)=>a.d-b.d||a.zt-b.zt);
+}
+const TAG={ok:'Dentro da faixa',low:'Abaixo do mínimo',high:'Acima da faixa'};
+
+function draw(c){
+  const w=110,h=80,gapV=34,colGap=84,lm=56;
+  const ps=c.k==='ps'||c.k==='s',nc=ps?c.p:c.s,nr=ps?c.s:c.p,top=ps&&nc>1?72:52;
+  const colX=i=>lm+i*(w+colGap),rowY=r=>top+r*(h+gapV),ty=r=>rowY(r)+60;
+  const tp=i=>colX(i)+12,tm=i=>colX(i)+w-12,last=nr-1,lastY=rowY(last)+h;
+  const L=[],T=[],S=[],D=[];
+  const ln=(pts,col)=>L.push(`<polyline points="${pts.map(p=>p.join(',')).join(' ')}" fill="none" stroke="var(--${col})" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/>`);
+  const left=colX(0)-30,right=colX(nc-1)+w+30;
+  let yOut,redStart,blueStart;
+  if(ps){
+    const yTop=top-22,yBB=lastY+20;yOut=yBB+30;
+    for(let i=0;i<nc;i++){const x=colX(i);
+      ln([[x-30,nc>1?yTop:ty(0)],[x-30,ty(0)],[tp(i),ty(0)]],'red');
+      for(let k=0;k<last;k++){const ym=rowY(k+1)-gapV/2;ln([[tm(i),ty(k)],[x+w+12,ty(k)],[x+w+12,ym],[x-12,ym],[x-12,ty(k+1)],[tp(i),ty(k+1)]],'jump')}
+      ln([[tm(i),ty(last)],[x+w+30,ty(last)],[x+w+30,nc>1?yBB:ty(last)]],'blue');
+      if(c.k==='ps')T.push(`<text x="${x+w/2}" y="${yTop-12}" text-anchor="middle" font-size="13" font-weight="600">Linha ${i+1} · ${fmt(st.z*nr)} Ω</text>`);
+    }
+    if(nc>1){ln([[left,yTop],[colX(nc-1)-30,yTop]],'red');ln([[colX(0)+w+30,yBB],[right,yBB]],'blue')}
+    redStart=[left,ty(0)];blueStart=[right,nc>1?yBB:ty(last)];
+  }else{
+    yOut=lastY+34;
+    for(let i=0;i<nc;i++){const x=colX(i),lb=x-24,rb=x+w+24;
+      for(let r=0;r<nr;r++){ln([[lb,ty(r)],[tp(i),ty(r)]],'red');ln([[tm(i),ty(r)],[rb,ty(r)]],'blue')}
+      if(nr>1){ln([[lb,ty(0)],[lb,ty(last)]],'red');ln([[rb,ty(0)],[rb,ty(last)]],'blue')}
+      if(i<nc-1)ln([[rb,ty(0)],[colX(i+1)-24,ty(0)]],'jump');
+      if(c.k==='sp')T.push(`<text x="${x+w/2}" y="${top-18}" text-anchor="middle" font-size="13" font-weight="600">Grupo ${i+1} · ${fmt(st.z/nr)} Ω</text>`);
+    }
+    redStart=[colX(0)-24,ty(last)];blueStart=[colX(nc-1)+w+24,ty(last)];
+  }
+  const cx=(left+right)/2,oP=cx-36,oM=cx+36;
+  ln([redStart,[redStart[0],yOut],[oP,yOut]],'red');
+  ln([blueStart,[blueStart[0],yOut],[oM,yOut]],'blue');
+  for(let i=0;i<nc;i++)for(let r=0;r<nr;r++){const x=colX(i),y=rowY(r);
+    S.push(`<use href="#spk" x="${x}" y="${y}"/><text x="${x+55}" y="${y+73}" text-anchor="middle" font-size="13" font-weight="700" style="fill:#fff">${fmt(st.z)}Ω</text>
+<text x="${x+12}" y="${y+50}" text-anchor="middle" font-size="15" font-weight="700" style="fill:var(--red)">+</text><text x="${x+w-12}" y="${y+50}" text-anchor="middle" font-size="15" font-weight="700" style="fill:var(--blue)">−</text>`);
+    D.push(`<circle cx="${tp(i)}" cy="${ty(r)}" r="5.5" fill="var(--red)"/><circle cx="${tm(i)}" cy="${ty(r)}" r="5.5" fill="var(--blue)"/>`)}
+  const out=`<circle cx="${oP}" cy="${yOut}" r="9" fill="var(--red)"/><circle cx="${oM}" cy="${yOut}" r="9" fill="var(--blue)"/>
+<text x="${oP}" y="${yOut+5}" text-anchor="middle" font-size="14" font-weight="700" style="fill:#fff">+</text><text x="${oM}" y="${yOut+5}" text-anchor="middle" font-size="14" font-weight="700" style="fill:#fff">−</text>
+<text x="${cx}" y="${yOut+46}" text-anchor="middle" font-size="32" font-weight="700" style="font-family:-apple-system,Helvetica,Arial,sans-serif">${fmt(c.zt)} Ω</text>
+<text x="${cx}" y="${yOut+68}" text-anchor="middle" font-size="13" style="fill:var(--mute)">saída para o amplificador</text>`;
+  const defs=`<defs><linearGradient id="cone" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1a1d21"/><stop offset="1" stop-color="#3b424a"/></linearGradient>
+<g id="spk"><path d="M2 2h106l-8 13H10z" fill="var(--rim)" stroke="var(--mute)" stroke-width="1"/><path d="M14 15h82L74 44H36z" fill="url(#cone)"/>
+<rect x="12" y="57" width="86" height="6" rx="3" fill="#9aa3ad"/><rect x="24" y="44" width="62" height="36" rx="9" fill="var(--spk)" stroke="var(--mute)" stroke-width="1"/><rect x="24" y="44" width="62" height="7" rx="3" fill="#b8c0c8"/></g></defs>`;
+  const W=Math.max(right+40,260),H=yOut+86;
+  const cw=$('fig').clientWidth-16,sc=Math.max(.8,Math.min(1,cw/W));
+  $('fig').innerHTML=`<svg width="${Math.round(W*sc)}" height="${Math.round(H*sc)}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Diagrama: ${c.name}, total ${fmt(c.zt)} ohms">${defs}${L.join('')}${S.join('')}${D.join('')}${T.join('')}${out}</svg>`;
+}
+
+function render(){
+  const list=configs();
+  if(!list.find(c=>c.id===st.sel))st.sel=list[0].id;
+  const c=list.find(c=>c.id===st.sel);cur=c;
+  $('result').innerHTML=`<div class="rhead"><div class="big">${fmt(c.zt)} Ω</div><span class="tag ${c.st}">${TAG[c.st]}</span></div><p class="cname">${c.name}</p><p class="calc">${c.calc}</p>`;
+  draw(c);
+  const ok=list.filter(x=>x.st==='ok').length;
+  $('optTitle').textContent=`${list.length} ${list.length>1?'opções':'opção'} de ligação · ${ok} dentro de ${fmt(st.min)} a ${fmt(st.max)} Ω`;
+  $('opts').innerHTML=list.map(x=>`<button type="button" class="opt" data-id="${x.id}" aria-pressed="${x.id===st.sel}"><span>${x.name}<small>${TAG[x.st]}</small></span><b>${fmt(x.zt)} Ω</b></button>`).join('');
+  $('zChips').innerHTML=ZS.map(z=>`<button type="button" class="chip" data-z="${z}" aria-pressed="${z===st.z}">${z} Ω</button>`).join('');
+  $('n').value=st.n;$('min').value=st.min;$('max').value=st.max;
+  $('zc').value=ZS.includes(st.z)?'':st.z;
+  save();
+}
+const setN=v=>{v=Math.max(1,Math.min(32,Math.round(v)||1));if(v!==st.n){st.n=v;st.sel=null}render()};
+$('nMinus').onclick=()=>setN(st.n-1);
+$('nPlus').onclick=()=>setN(st.n+1);
+$('n').onchange=e=>setN(+e.target.value);
+$('zChips').onclick=e=>{const b=e.target.closest('[data-z]');if(b){st.z=+b.dataset.z;render()}};
+$('zc').onchange=e=>{const v=parseFloat(e.target.value);if(v>0){st.z=v;render()}};
+$('min').onchange=e=>{const v=parseFloat(e.target.value);if(v>0){st.min=Math.min(v,st.max);st.sel=null}render()};
+$('max').onchange=e=>{const v=parseFloat(e.target.value);if(v>0){st.max=Math.max(v,st.min);st.sel=null}render()};
+$('opts').onclick=e=>{const b=e.target.closest('[data-id]');if(b){st.sel=b.dataset.id;render();if(innerWidth<900)$('fig').scrollIntoView({behavior:'smooth',block:'center'})}};
+const COL={red:'#d7262e',blue:'#1d5bd8',jump:'#7a828c',ink:'#111418',mute:'#5b6470',rim:'#454c55',spk:'#2a2f35',bg:'#ffffff',box:'#ffffff'};
+const msg=t=>{$('expMsg').textContent=t};
+async function makeJpg(){
+  const svg=$('fig').querySelector('svg'),vb=svg.viewBox.baseVal,W=vb.width,H=vb.height;
+  const cl=svg.cloneNode(true);cl.setAttribute('width',W);cl.setAttribute('height',H);cl.setAttribute('xmlns','http://www.w3.org/2000/svg');
+  let s=new XMLSerializer().serializeToString(cl).replace(/var\(--([a-z]+)\)/g,(m,k)=>COL[k]||'#000');
+  s=s.replace(/(<svg[^>]*>)/,'$1<style>text{font-family:Helvetica,Arial,sans-serif;fill:#111418}</style>');
+  const img=new Image();img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(s);await img.decode();
+  const t1=`${st.n} alto-falante${st.n>1?'s':''} de ${fmt(st.z)} Ω → ${fmt(cur.zt)} Ω`,t2=cur.name,t3=cur.calc;
+  const cv=document.createElement('canvas'),x=cv.getContext('2d'),sc=1.5,head=96;
+  x.font='14px -apple-system, Helvetica, Arial, sans-serif';const tw=Math.max(x.measureText(t2).width,x.measureText(t3).width)+32;
+  const CW=Math.ceil(Math.max(W,tw,320));cv.width=CW*sc;cv.height=(H+head)*sc;x.scale(sc,sc);
+  x.fillStyle='#fff';x.fillRect(0,0,CW,H+head);x.fillStyle='#111418';
+  x.font='bold 22px -apple-system, Helvetica, Arial, sans-serif';x.fillText(t1,16,34);
+  x.font='15px -apple-system, Helvetica, Arial, sans-serif';x.fillText(t2,16,60);
+  x.fillStyle='#5b6470';x.font='13px -apple-system, Helvetica, Arial, sans-serif';x.fillText(t3,16,82);
+  x.drawImage(img,(CW-W)/2,head,W,H);
+  return new Promise(r=>cv.toBlob(r,'image/jpeg',0.6));
+}
+const showOv=b=>{$('ovImg').src=URL.createObjectURL(b);$('ov').hidden=false};
+$('ovClose').onclick=()=>{$('ov').hidden=true;URL.revokeObjectURL($('ovImg').src)};
+$('exp').onclick=async()=>{
+  msg('Gerando…');
+  let b;try{b=await makeJpg()}catch(e){msg('Não foi possível gerar a imagem.');return}
+  const name=`ligacao-${st.n}x${fmt(st.z)}ohm-${fmt(cur.zt)}ohm.jpg`.replace(/,/g,'-');
+  const file=new File([b],name,{type:'image/jpeg'});
+  if(matchMedia('(pointer:coarse)').matches&&navigator.canShare&&navigator.canShare({files:[file]})){
+    try{await navigator.share({files:[file],title:'Esquema de ligação'});msg('');return}catch(e){if(e&&e.name==='AbortError'){msg('');return}}}
+  else{try{const u=URL.createObjectURL(b),l=document.createElement('a');l.href=u;l.download=name;document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);msg('Imagem salva.');return}catch(e){}}
+  msg('');showOv(b);
+};
+let rt;const ro=new ResizeObserver(()=>{clearTimeout(rt);rt=setTimeout(render,120)});ro.observe($('fig'));
+render();
+if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+}
+</script>
+</body>
+</html>

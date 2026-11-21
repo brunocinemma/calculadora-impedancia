@@ -1,0 +1,15 @@
+{
+  "name": "Calculadora de Impedância",
+  "short_name": "Impedância",
+  "description": "Cálculo de impedância de alto-falantes em série e paralelo, com esquema de ligação.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#111418",
+  "lang": "pt-BR",
+  "icons": [
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
+  ]
+}
