@@ -126,6 +126,8 @@ li.caut{color:#8a6a00;font-weight:600}
 .sug .si{display:flex;align-items:center;gap:8px;text-align:left;width:100%;padding:9px 10px;border-radius:10px;border:1px solid rgba(127,127,127,.35);background:rgba(127,127,127,.08);color:inherit;font:inherit;cursor:pointer}
 .sug .si[aria-pressed="true"]{border-color:#21918c;background:rgba(33,145,140,.15)}
 .sug .si span{flex:1 1 auto;min-width:0}.sug .si small{display:block;opacity:.75;font-size:12px;margin-top:2px}
+.sug .si i.tg{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:5px;font-style:normal}
+.brb{font-style:normal;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:1px 6px;border-radius:5px;border:1px solid #8b6cff;color:#8b6cff;white-space:nowrap}.brb.on{background:#7b5cff;border-color:#7b5cff;color:#fff}
 .sug .si b{flex:none;font-size:12px;padding:2px 8px;border-radius:99px;background:rgba(127,127,127,.2)}
 .sug .si b.ok{background:#1f8a4c;color:#fff}.sug .si b.mid{background:#c98a00;color:#fff}.sug .si b.high{background:#7a828c;color:#fff}
 .tog:disabled{opacity:.45;cursor:not-allowed}
@@ -169,7 +171,7 @@ li.caut{color:#8a6a00;font-weight:600}
 <button type="button" class="tog" id="mrTog" role="switch" aria-checked="false"><span class="sw"></span><span>Várias salas (multiroom)</span></button>
 <div id="mrOpts" hidden><label for="nr" class="lbl" style="margin-top:12px">Número de salas</label>
 <div class="step"><button type="button" id="rMinus" aria-label="Menos salas">−</button><input type="number" id="nr" min="2" max="12" inputmode="numeric"><button type="button" id="rPlus" aria-label="Mais salas">+</button></div>
-<div id="rList" class="rlist"></div><p class="unit" style="margin:6px 0 0">Cada sala usa um canal (zona) do amplificador.</p></div></div>
+<div id="rList" class="rlist"></div><p class="unit" style="margin:6px 0 0">Cada sala usa um canal (zona) do amplificador; se sobrarem canais, as salas maiores podem receber mais de um.</p></div></div>
 <div class="field" id="nBox"><label for="n">Quantidade de alto-falantes</label>
 <div class="step"><button type="button" id="nMinus" aria-label="Diminuir">−</button><input type="number" id="n" min="1" max="32" value="4" inputmode="numeric"><button type="button" id="nPlus" aria-label="Aumentar">+</button></div></div>
 <div class="field"><span class="lbl">Impedância de cada alto-falante</span>
@@ -184,7 +186,7 @@ li.caut{color:#8a6a00;font-weight:600}
 <button type="button" class="tog" id="acTog" role="switch" aria-checked="false" style="margin-top:8px"><span class="sw"></span><span>Usar todos os canais</span></button>
 <div id="acOpts" hidden><div class="range" id="acManBox" style="margin-top:8px"><label for="acMan" class="unit">Canais do amplificador</label><input type="number" id="acMan" min="1" max="16" style="width:80px" inputmode="numeric"></div><p class="unit" id="acNote" style="margin:6px 0 0"></p></div>
 <div id="aOpts" hidden><label for="ampB" class="lbl">Marca</label><select id="ampB"></select>
-<label for="ampM" class="lbl">Modelo</label><select id="ampM"></select><p class="unit" id="ampInfo" style="margin:8px 0 0"></p>
+<label for="ampM" class="lbl">Modelo</label><select id="ampM"></select><button type="button" class="tog" id="brTog" role="switch" aria-checked="false" style="margin-top:10px" hidden><span class="sw"></span><span>Usar em bridge</span></button><p class="unit" id="ampInfo" style="margin:8px 0 0"></p>
 <details style="margin-top:12px"><summary class="lbl" style="cursor:pointer;margin:0">Cadastrar amplificador</summary>
 <div class="addf"><label for="aaB">Marca</label><input id="aaB" placeholder="ex.: Next Pro">
 <label for="aaM">Modelo</label><input id="aaM" placeholder="ex.: NA4350">
@@ -329,8 +331,18 @@ const kTxt=x=>x.k>1?(x.sizes&&x.sizes.some(v=>v!==x.sizes[0])?`${x.k} canais (${
 const sugN=()=>st.sugK?st.sugK.total:st.n;
 const rTag=r=>r>=1.5&&r<=2.05?['ok','ideal']:r<1.5?['mid','pouca folga']:['high','acima'];
 const rScore=r=>r>=1.5&&r<=2.05?Math.abs(r-1.75)*.1:1+(r<1.5?(1.5-r)*2:(r-2.05));
-function mrEval(av,z,pk,mn,mx){const R=rooms(),xs=[];for(const r of R){const x=withSt(roomCab(r),()=>split(av,1,r.n,z,pk,mn,mx));if(!x)return null;xs.push(x)}const w=xs.reduce((a,b)=>b.sc>a.sc?b:a);return {xs,w,sc:w.sc,r:w.r}}
-const mrSub=xs=>xs.map((x,i)=>`Sala ${i+1}: ${fmt(x.Z)} Ω, ${fmt(x.r)}×`).join(' · ');
+const divs=n=>{const o=[];for(let k=1;k<=n;k++)if(n%k===0)o.push(k);return o};
+// distribui canais sobrando para as salas que precisam (so divisoes exatas, para cada canal ficar igual)
+function mrEval(av,z,pk,mn,mx,C){const R=rooms(),nr=R.length,ev=(r,k)=>withSt(roomCab(r),()=>split(av,1,r.n/k,z,pk,mn,mx));
+  const ks=R.map(()=>1),xs=R.map(r=>ev(r,1));let spare=Math.max(0,(C||nr)-nr);
+  while(spare>0){let best=null;
+    R.forEach((r,i)=>{const cs=xs[i]?xs[i].sc:1e9;if(cs<1)return;
+      for(const k of divs(r.n)){if(k<=ks[i]||k-ks[i]>spare)continue;const x=ev(r,k);if(!x||x.sc>=cs-.01)continue;
+        const g=(cs-x.sc)/(k-ks[i]);if(!best||cs>best.cs||(cs===best.cs&&g>best.g))best={i,k,x,cs,g}}});
+    if(!best)break;spare-=best.k-ks[best.i];ks[best.i]=best.k;xs[best.i]=best.x}
+  if(xs.some(x=>!x))return null;xs.forEach((x,i)=>x.kr=ks[i]);const w=xs.reduce((a,b)=>b.sc>a.sc?b:a);return {xs,ks,w,sc:w.sc,r:w.r,used:ks.reduce((a,b)=>a+b,0)}}
+const powT=a=>(a.p4||a.p8||0)*chOf(a)*(a.isBr?1.05:1);
+const mrSub=xs=>xs.map((x,i)=>`Sala ${i+1}: ${x.kr>1?`${x.kr} canais com ${x.c.slots||''}${x.c.slots?' caixas cada, ':''}`:''}${fmt(x.Z)} Ω, ${fmt(x.r)}×`).join(' · ');
 function sugAmpsMr(){
   const R=rooms(),nr=R.length,pk=+st.pspk||0;
   if(st.trafo){const t=+st.tap||0;if(!t)return {msg:'Informe o TAP para sugerir amplificadores de linha.'};const need=Math.max(...R.map(r=>r.n*t*1.25));
@@ -338,17 +350,17 @@ function sugAmpsMr(){
     return L.length?{L,head:`Multicanais de linha para ${nr} salas (um canal por sala):`}:{msg:`Nenhum amplificador de linha cadastrado tem ${nr} canais com ${fmt(need)} W cada.`}}
   if(!pk)return {msg:'Informe a potência de cada alto-falante para sugerir amplificadores.'};
   const L=[];
-  allAmps().forEach(a=>{if((!a.p8&&!a.p4)||chOf(a)<nr)return;const e=mrEval(avOf(a),st.z,pk,a.p2?2:(a.p4===0?8:4),8);if(!e)return;
-    L.push({a,sc:e.sc,r:e.r,sub:`${chOf(a)} canais · ${mrSub(e.xs)}`,tag:rTag(e.r)})});
-  L.sort((x,y)=>x.sc-y.sc||chOf(x.a)-chOf(y.a));
-  return L.length?{L:L.slice(0,8),head:`Multicanais para ${nr} salas, um canal por sala (ideal: 1,5 a 2× em cada sala):`}:{msg:`Nenhum multicanal cadastrado com ${nr} canais atende todas as salas com folga.`}}
+  ampPool().forEach(a=>{if((!a.p8&&!a.p4)||chOf(a)<nr)return;const e=mrEval(avOf(a),st.z,pk,a.p2?2:(a.p4===0?8:4),8,chOf(a));if(!e)return;
+    L.push({a,sc:e.sc,r:e.r,sub:`${chOf(a)} canais${e.used>nr?` (usa ${e.used})`:''} · ${mrSub(e.xs)}`,tag:rTag(e.r)})});
+  L.sort((x,y)=>x.sc-y.sc||powT(x.a)-powT(y.a));
+  return L.length?{L:L.slice(0,8),head:`Multicanais para ${nr} salas (ideal: 1,5 a 2× em cada sala; canais que sobram reforçam as salas maiores):`}:{msg:`Nenhum multicanal cadastrado com ${nr} canais atende todas as salas com folga.`}}
 function sugSpkMr(){
   const av=ampVals(),f=st.sugT||'todos',ok=m=>f==='todos'||m.tipo===f,L=[],R=rooms();
   if(st.trafo){const pc=curAmp()?(curAmp().v70||0):(+st.pch||0);if(!pc)return {msg:'Escolha um amplificador de linha ou informe a potência do canal.'};const nm=Math.max(...R.map(r=>r.n));
     allModels().filter(ok).forEach(m=>{const t=(+st.vline===100?m.t100:m.t70)||[];const fit=t.filter(x=>nm*x*1.25<=pc);if(!fit.length)return;const tap=Math.max(...fit);L.push({m,sc:-tap,sub:`TAP ${fmt(tap)} W · sala maior: ${nm} × ${fmt(tap)} W de ${fmt(pc)} W`,tag:['ok','atende']})});
     L.sort((x,y)=>x.sc-y.sc);return L.length?{L:L.slice(0,8),head:`Com ${fmt(pc)} W por canal em linha de ${st.vline} V:`}:{msg:'Nenhum modelo com TAPs cadastrados cabe nessa potência.'}}
   if(!av.p8&&!av.p4&&!av.p2)return {msg:'Escolha o amplificador ou informe a potência do canal para sugerir alto-falantes.'};
-  allModels().filter(ok).forEach(m=>{if(!m.z||!m.p)return;const e=mrEval(av,m.z,m.p,st.min,st.max);if(!e)return;L.push({m,sc:e.sc,r:e.r,sub:`${fmt(m.z)} Ω · ${fmt(m.p)} W · ${m.tipo||''} · ${mrSub(e.xs)}`,tag:rTag(e.r)})});
+  allModels().filter(ok).forEach(m=>{if(!m.z||!m.p)return;const e=mrEval(av,m.z,m.p,st.min,st.max,curAmp()?chOf(curAmp()):0);if(!e)return;L.push({m,sc:e.sc,r:e.r,sub:`${fmt(m.z)} Ω · ${fmt(m.p)} W · ${m.tipo||''} · ${mrSub(e.xs)}`,tag:rTag(e.r)})});
   L.sort((x,y)=>x.sc-y.sc||y.m.p-x.m.p);
   return L.length?{L:L.slice(0,8),head:`Caixas que ficam bem em todas as ${R.length} salas com este amplificador:`}:{msg:'Nenhum modelo cadastrado fica ideal em todas as salas com este amplificador.'}}
 function sugAmps(){
@@ -360,9 +372,9 @@ function sugAmps(){
   if(!pk)return {msg:'Informe a potência de cada alto-falante para sugerir amplificadores.'};
   const L=[];
   const N=sugN();
-  allAmps().forEach(a=>{if(!a.p8&&!a.p4)return;const x=split(avOf(a),chOf(a),N,st.z,pk,a.p2?2:(a.p4===0?8:4),8,st.allCh?chOf(a):0);if(!x)return;
+  ampPool().forEach(a=>{if(!a.p8&&!a.p4)return;const x=split(avOf(a),chOf(a),N,st.z,pk,a.p2?2:(a.p4===0?8:4),8,st.allCh?chOf(a):0);if(!x)return;
     L.push({a,...x,sub:`${kTxt(x)}${x.c.name} · ${fmt(x.Z)} Ω · ${fmt(x.q.p)} W no canal${x.q.est?' (est.)':''} = ${fmt(x.r)}×`,tag:rTag(x.r)})});
-  L.sort((x,y)=>x.sc-y.sc||(x.a.p4||x.a.p8)-(y.a.p4||y.a.p8));
+  L.sort((x,y)=>x.sc-y.sc||powT(x.a)-powT(y.a));
   return L.length?{L:L.slice(0,8),head:`Para ${N} × ${fmt(st.z)} Ω de ${fmt(pk)} W (ideal: 1,5 a 2× a soma por canal):`}:{msg:'Nenhum amplificador cadastrado atende esta ligação com folga.'}}
 function sugSpk(){
   if(st.multi)return sugSpkMr();
@@ -382,11 +394,11 @@ function renderSug(){CFGC.clear();
   $('sugATog').disabled=!!st.sugS;$('sugSTog').disabled=!!st.sugA;
   $('sugA').hidden=!st.sugA;$('sugS').hidden=!st.sugS;
   const hint=!st.multi&&st.sugK&&st.sugK.k>1?`<p class="sh" style="color:#21918c">Calculando 1 canal com ${st.n} caixa${st.n>1?'s':''}: ligue igual ${st.sugK.k>2?`nos outros ${st.sugK.k-1} canais`:'no outro canal'} (${st.sugK.total} no total).</p>`:'';
-  const item=(id,lab,x,on)=>`<button type="button" class="si" data-k="${x.k||1}" data-sel="${(x.sels||[]).join(',')}" data-${id}="${encodeURIComponent(lab)}" aria-pressed="${on}"><span>${lab}<small>${x.sub}</small></span><b class="${x.tag[0]}">${x.tag[1]}</b></button>`;
+  const item=(id,lab,x,on)=>`<button type="button" class="si" data-k="${x.k||1}" data-sel="${(x.sels||[]).join(',')}" data-${id}="${encodeURIComponent(lab)}" aria-pressed="${on}"><span>${lab}<small>${x.sub}</small></span><i class="tg"><b class="${x.tag[0]}">${x.tag[1]}</b>${x.a&&x.a.isBr?'<em class="brb on">em bridge</em>':x.a&&x.a.br?'<em class="brb">aceita bridge</em>':''}</i></button>`;
   const more='';
   [['A',st.sugA],['S',st.sugS]].forEach(([k,on])=>{const x=$('sug'+k+'X');x.hidden=!on;x.textContent=st.sugCol?'▾':'▴';x.setAttribute('aria-label',st.sugCol?'Expandir lista':'Recolher lista')});
   if(st.sugA&&st.sugCol){const ca=curAmp();$('sugA').innerHTML=hint+`<p class="sh">${ca?`Escolhido: <b>${ca.b} ${ca.m}</b>`:'Lista recolhida, nenhum escolhido ainda.'}</p>`+more}
-  else if(st.sugA){const R=sugAmps(),ca=curAmp();$('sugA').innerHTML=hint+(R.msg?`<p class="sh">${R.msg}</p>`:`<p class="sh">${R.head}</p>`+R.L.map(x=>item('amp',`${x.a.b}|${x.a.m}`,x,ca===x.a).replace(/<span>[^<]*/,`<span>${x.a.b} ${x.a.m}`)).join(''))}
+  else if(st.sugA){const R=sugAmps(),ca=curAmp();$('sugA').innerHTML=hint+(R.msg?`<p class="sh">${R.msg}</p>`:`<p class="sh">${R.head}</p>`+R.L.map(x=>item('amp',`${x.a.b}|${x.a.m}`,x,sameA(ca,x.a)).replace(/<span>[^<]*/,`<span>${x.a.b} ${x.a.m}`)).join(''))}
   if(st.sugS&&st.sugCol){const cm=curModel();$('sugS').innerHTML=hint+`<p class="sh">${cm?`Escolhido: <b>${cm.b} ${cm.m}</b>`:'Lista recolhida, nenhum escolhido ainda.'}</p>`+more}
   else if(st.sugS){const R=sugSpk(),cm=curModel(),f=st.sugT||'todos';
     $('sugS').innerHTML=hint+`<div class="chips" id="sugTf">${['todos','embutir','sobrepor'].map(t=>`<button type="button" class="chip" data-tf="${t}" aria-pressed="${t===f}">${t[0].toUpperCase()+t.slice(1)}</button>`).join('')}</div>`+(R.msg?`<p class="sh">${R.msg}</p>`:`<p class="sh">${R.head}</p>`+R.L.map(x=>item('spk',`${x.m.b}|${x.m.m}`,x,cm===x.m).replace(/<span>[^<]*/,`<span>${x.m.b} ${x.m.m}`)).join(''))}
@@ -444,59 +456,54 @@ const AMPS=[
  {b:'AAT',m:'PMR-1 G2 (8 canais)',ch:'8 canais',p8:null,p4:80,p2:0,note:'tabela AAT: potência contínua por canal, carga de 4 a 16 Ω'},
  {b:'AAT',m:'PMR-2 G2 (4 canais)',ch:'4 canais',p8:null,p4:80,p2:0,note:'tabela AAT: potência contínua por canal, carga de 4 a 16 Ω'},
  {b:'AAT',m:'PMR-3 (2 canais)',ch:'2 canais',p8:null,p4:50,p2:0,note:'tabela AAT: potência contínua por canal, carga de 4 a 16 Ω'},
- {b:'AAT',m:'PMR-4 G4 (8 canais)',ch:'8 canais',p8:null,p4:100,p2:0,note:'tabela AAT: potência contínua por canal, carga de 4 a 16 Ω (8 a 32 Ω em bridge)'},
- {b:'AAT',m:'PMR-5 G4 (12 canais)',ch:'12 canais',p8:null,p4:100,p2:0,note:'tabela AAT: potência contínua por canal, carga de 4 a 16 Ω (8 a 32 Ω em bridge)'},
- {b:'AAT',m:'PMR-6 G4 (8 canais)',ch:'8 canais',p8:null,p4:100,p2:0,note:'tabela AAT: potência contínua por canal, carga de 4 a 16 Ω (8 a 32 Ω em bridge)'},
- {b:'AAT',m:'PMR-7 G4 (12 canais)',ch:'12 canais',p8:null,p4:100,p2:0,note:'tabela AAT: potência contínua por canal, carga de 4 a 16 Ω (8 a 32 Ω em bridge)'},
- {b:'AAT',m:'PMR-8 G4 (4 canais)',ch:'4 canais',p8:null,p4:100,p2:0,note:'tabela AAT: potência contínua por canal, carga de 4 a 16 Ω (8 a 32 Ω em bridge)'},
- {b:'AAT',m:'PMR-9 G4 (8 canais)',ch:'8 canais',p8:null,p4:100,p2:0,note:'tabela AAT: potência contínua por canal, carga de 4 a 16 Ω (8 a 32 Ω em bridge)'},
- {b:'AAT',m:'PMR-10 G4 (12 canais)',ch:'12 canais',p8:null,p4:100,p2:0,note:'tabela AAT: potência contínua por canal, carga de 4 a 16 Ω (8 a 32 Ω em bridge)'},
- {b:'AAT',m:'PMR-11 G4 (8 canais)',ch:'8 canais',p8:null,p4:100,p2:0,note:'tabela AAT: potência contínua por canal, carga de 4 a 16 Ω (8 a 32 Ω em bridge)'},
- {b:'AAT',m:'PMR-12 G4 (12 canais)',ch:'12 canais',p8:null,p4:100,p2:0,note:'tabela AAT: potência contínua por canal, carga de 4 a 16 Ω (8 a 32 Ω em bridge)'},
- {b:'AAT',m:'PMR-13 G4 (4 canais)',ch:'4 canais',p8:null,p4:100,p2:0,note:'tabela AAT: potência contínua por canal, carga de 4 a 16 Ω (8 a 32 Ω em bridge)'},
- {b:'AAT',m:'PMR-14 G4 (8 canais)',ch:'8 canais',p8:null,p4:100,p2:0,note:'tabela AAT: potência contínua por canal, carga de 4 a 16 Ω (8 a 32 Ω em bridge)'},
- {b:'AAT',m:'PMR-15 G4 (12 canais)',ch:'12 canais',p8:null,p4:100,p2:0,note:'tabela AAT: potência contínua por canal, carga de 4 a 16 Ω (8 a 32 Ω em bridge)'},
- {b:'AAT',m:'PMR-16 G4 (4 canais)',ch:'4 canais',p8:null,p4:100,p2:0,note:'tabela AAT: potência contínua por canal, carga de 4 a 16 Ω (8 a 32 Ω em bridge)'},
- {b:'AAT',m:'PMR-17 G5 (8 canais)',ch:'8 canais',p8:null,p4:100,p2:0,note:'tabela AAT: potência contínua por canal, carga de 4 a 16 Ω (8 a 32 Ω em bridge)'},
- {b:'AAT',m:'PMR-18 G5 (12 canais)',ch:'12 canais',p8:null,p4:100,p2:0,note:'tabela AAT: potência contínua por canal, carga de 4 a 16 Ω (8 a 32 Ω em bridge)'},
+ {b:'AAT',m:'PMR-4 G4 (8 canais)',ch:'8 canais',p8:null,p4:100,p2:0,br:{p8:200,p4:0,est:1},note:'tabela AAT: potência contínua por canal, carga de 4 a 16 Ω (8 a 32 Ω em bridge)'},
+ {b:'AAT',m:'PMR-5 G4 (12 canais)',ch:'12 canais',p8:null,p4:100,p2:0,br:{p8:200,p4:0,est:1},note:'tabela AAT: potência contínua por canal, carga de 4 a 16 Ω (8 a 32 Ω em bridge)'},
+ {b:'AAT',m:'PMR-6 G4 (8 canais)',ch:'8 canais',p8:null,p4:100,p2:0,br:{p8:200,p4:0,est:1},note:'tabela AAT: potência contínua por canal, carga de 4 a 16 Ω (8 a 32 Ω em bridge)'},
+ {b:'AAT',m:'PMR-7 G4 (12 canais)',ch:'12 canais',p8:null,p4:100,p2:0,br:{p8:200,p4:0,est:1},note:'tabela AAT: potência contínua por canal, carga de 4 a 16 Ω (8 a 32 Ω em bridge)'},
+ {b:'AAT',m:'PMR-8 G4 (4 canais)',ch:'4 canais',p8:null,p4:100,p2:0,br:{p8:200,p4:0,est:1},note:'tabela AAT: potência contínua por canal, carga de 4 a 16 Ω (8 a 32 Ω em bridge)'},
+ {b:'AAT',m:'PMR-9 G4 (8 canais)',ch:'8 canais',p8:null,p4:100,p2:0,br:{p8:200,p4:0,est:1},note:'tabela AAT: potência contínua por canal, carga de 4 a 16 Ω (8 a 32 Ω em bridge)'},
+ {b:'AAT',m:'PMR-10 G4 (12 canais)',ch:'12 canais',p8:null,p4:100,p2:0,br:{p8:200,p4:0,est:1},note:'tabela AAT: potência contínua por canal, carga de 4 a 16 Ω (8 a 32 Ω em bridge)'},
+ {b:'AAT',m:'PMR-11 G4 (8 canais)',ch:'8 canais',p8:null,p4:100,p2:0,br:{p8:200,p4:0,est:1},note:'tabela AAT: potência contínua por canal, carga de 4 a 16 Ω (8 a 32 Ω em bridge)'},
+ {b:'AAT',m:'PMR-12 G4 (12 canais)',ch:'12 canais',p8:null,p4:100,p2:0,br:{p8:200,p4:0,est:1},note:'tabela AAT: potência contínua por canal, carga de 4 a 16 Ω (8 a 32 Ω em bridge)'},
+ {b:'AAT',m:'PMR-13 G4 (4 canais)',ch:'4 canais',p8:null,p4:100,p2:0,br:{p8:200,p4:0,est:1},note:'tabela AAT: potência contínua por canal, carga de 4 a 16 Ω (8 a 32 Ω em bridge)'},
+ {b:'AAT',m:'PMR-14 G4 (8 canais)',ch:'8 canais',p8:null,p4:100,p2:0,br:{p8:200,p4:0,est:1},note:'tabela AAT: potência contínua por canal, carga de 4 a 16 Ω (8 a 32 Ω em bridge)'},
+ {b:'AAT',m:'PMR-15 G4 (12 canais)',ch:'12 canais',p8:null,p4:100,p2:0,br:{p8:200,p4:0,est:1},note:'tabela AAT: potência contínua por canal, carga de 4 a 16 Ω (8 a 32 Ω em bridge)'},
+ {b:'AAT',m:'PMR-16 G4 (4 canais)',ch:'4 canais',p8:null,p4:100,p2:0,br:{p8:200,p4:0,est:1},note:'tabela AAT: potência contínua por canal, carga de 4 a 16 Ω (8 a 32 Ω em bridge)'},
+ {b:'AAT',m:'PMR-17 G5 (8 canais)',ch:'8 canais',p8:null,p4:100,p2:0,br:{p8:200,p4:0,est:1},note:'tabela AAT: potência contínua por canal, carga de 4 a 16 Ω (8 a 32 Ω em bridge)'},
+ {b:'AAT',m:'PMR-18 G5 (12 canais)',ch:'12 canais',p8:null,p4:100,p2:0,br:{p8:200,p4:0,est:1},note:'tabela AAT: potência contínua por canal, carga de 4 a 16 Ω (8 a 32 Ω em bridge)'},
  {b:'AAT',m:'PMRH-2 (2 canais)',ch:'2 canais',p8:null,p4:500,p2:0,note:'tabela AAT: potência contínua por canal, carga de 4 a 16 Ω; em bridge faz linha de 100 V'},
  {b:'AAT',m:'PMRH-4 (4 canais)',ch:'4 canais',p8:null,p4:500,p2:0,note:'tabela AAT: potência contínua por canal, carga de 4 a 16 Ω; em bridge faz linha de 100 V'},
  {b:'AAT',m:'PMRH-6 (6 canais)',ch:'6 canais',p8:null,p4:500,p2:0,note:'tabela AAT: potência contínua por canal, carga de 4 a 16 Ω; em bridge faz linha de 100 V'},
  {b:'WaveOne',m:'WAMP100W (2 canais)',ch:'2 canais',p8:25,p4:50,p2:0,note:'Wi-Fi e Bluetooth; até 8 caixas no total'},
- {b:'WaveOne',m:'WAMP200 (2 canais)',ch:'2 canais',p8:100,p4:125,p2:0,note:'até 12 caixas no total'},
- {b:'WaveOne',m:'WAMP200 em bridge (1 canal)',ch:'1 canal',p8:225,p4:0,p2:0,note:'bridge: só 8 Ω'},
- {b:'WaveOne',m:'WMR 46 (4 zonas, 8 canais)',ch:'8 canais',p8:null,p4:25,p2:0,note:'multiroom: 25 W por canal em estéreo; o catálogo não informa a impedância, considere 4 Ω mínimo'},
- {b:'WaveOne',m:'WMR 46 em bridge (4 canais)',ch:'4 canais',p8:100,p4:0,p2:0,note:'multiroom em bridge: 100 W por zona; impedância não informada, considere 8 Ω'},
- {b:'WaveOne',m:'WMR 46W (4 zonas, 8 canais)',ch:'8 canais',p8:null,p4:25,p2:0,note:'multiroom: 25 W por canal em estéreo; o catálogo não informa a impedância, considere 4 Ω mínimo'},
- {b:'WaveOne',m:'WMR 46W em bridge (4 canais)',ch:'4 canais',p8:100,p4:0,p2:0,note:'multiroom em bridge: 100 W por zona; impedância não informada, considere 8 Ω'},
- {b:'WaveOne',m:'WMR 66W (6 zonas, 12 canais)',ch:'12 canais',p8:null,p4:25,p2:0,note:'multiroom: 25 W por canal em estéreo; o catálogo não informa a impedância, considere 4 Ω mínimo'},
- {b:'WaveOne',m:'WMR 66W em bridge (6 canais)',ch:'6 canais',p8:100,p4:0,p2:0,note:'multiroom em bridge: 100 W por zona; impedância não informada, considere 8 Ω'},
+ {b:'WaveOne',m:'WAMP200 (2 canais)',ch:'2 canais',p8:100,p4:125,p2:0,br:{p8:225,p4:0},note:'até 12 caixas no total'},
+ {b:'WaveOne',m:'WMR 46 (4 zonas, 8 canais)',ch:'8 canais',p8:null,p4:25,p2:0,br:{p8:100,p4:0},note:'multiroom: 25 W por canal em estéreo; o catálogo não informa a impedância, considere 4 Ω mínimo'},
+ {b:'WaveOne',m:'WMR 46W (4 zonas, 8 canais)',ch:'8 canais',p8:null,p4:25,p2:0,br:{p8:100,p4:0},note:'multiroom: 25 W por canal em estéreo; o catálogo não informa a impedância, considere 4 Ω mínimo'},
+ {b:'WaveOne',m:'WMR 66W (6 zonas, 12 canais)',ch:'12 canais',p8:null,p4:25,p2:0,br:{p8:100,p4:0},note:'multiroom: 25 W por canal em estéreo; o catálogo não informa a impedância, considere 4 Ω mínimo'},
  {b:'Phase',m:'P3-35 (3 canais)',ch:'3 canais',p8:35,p4:40,p2:0,note:'modo 3 canais; Bluetooth e decodificação Dolby Digital'},
  {b:'Phase',m:'P3-35 em 2 canais',ch:'2 canais',p8:50,p4:55,p2:0,note:'modo 2 canais'},
  {b:'Phase',m:'P350 (1 canal)',ch:'1 canal',p8:225,p4:350,p2:0,note:'mono, carga de 4 a 16 Ω; modos sub, LFE e faixa ampla'},
- {b:'Phase',m:'OS-440 (4 canais)',ch:'4 canais',p8:null,p4:40,p2:0,note:'amplificador outdoor com Wi-Fi e Bluetooth: 40 W por canal em 4 Ω'},
- {b:'Phase',m:'OS-440 em bridge (2 canais)',ch:'2 canais',p8:80,p4:0,p2:0,note:'bridge: 80 W por canal em 8 Ω'},
+ {b:'Phase',m:'OS-440 (4 canais)',ch:'4 canais',p8:null,p4:40,p2:0,br:{p8:80,p4:0},note:'amplificador outdoor com Wi-Fi e Bluetooth: 40 W por canal em 4 Ω'},
  {b:'Kaz',m:'KWA 30.2 Streaming (2 canais)',ch:'2 canais',p8:18,p4:35,p2:0,note:'streaming multiroom: 2 × 35 W em 4 Ω, 2 × 18 W em 8 Ω'},
  {b:'Kaz',m:'KWA 50.2 Streaming (2 canais)',ch:'2 canais',p8:null,p4:35,p2:0,note:'a tabela informa 2 × 35 W, igual ao 30.2: confirmar com a Kaz'},
  {b:'MS Audio',m:'DSP 4400 Dual Zone (4 canais)',ch:'4 canais',p8:null,p4:100,p2:0,note:'tabela MS Audio: 400 W RMS em 4 Ω no total, dividido pelos 4 canais; Bluetooth, 2 zonas'},
  {b:'MS Audio',m:'DSP 4100 Dual Zone (4 canais)',ch:'4 canais',p8:null,p4:25,p2:0,note:'tabela MS Audio: 100 W RMS em 4 Ω no total, dividido pelos 4 canais; Bluetooth, 2 zonas'},
  {b:'MS Audio',m:'PW 4400 (4 canais)',ch:'4 canais',p8:null,p4:100,p2:0,note:'tabela MS Audio: 400 W RMS em 4 Ω no total, dividido pelos 4 canais'},
  {b:'Next Pro',m:'PowerMix 2ª geração mixer (1 canal)',ch:'1 canal',p8:null,p4:55,p2:100,note:'mono com mixer; mínimo 2 Ω (até 4 caixas de 8 Ω); linha 70 V só com transformador-elevador de 50 W'},
- {b:'Next Pro',m:'NA2100 (2 canais)',ch:'2 canais',p8:60,p4:100,p2:0,note:'Série Nano, 12 dB CF; mínimo 4 Ω; bridge 1 × 200 W em 8 Ω'},
- {b:'Next Pro',m:'NA2350 (2 canais)',ch:'2 canais',p8:250,p4:350,p2:350,note:'Série Nano, 12 dB CF; mínimo 2 Ω; bridge 1 × 700 W'},
- {b:'Next Pro',m:'NA2650 (2 canais)',ch:'2 canais',p8:550,p4:650,p2:650,note:'Série Nano, 12 dB CF; mínimo 2 Ω; bridge 1 × 1300 W'},
- {b:'Next Pro',m:'NA4350 (4 canais)',ch:'4 canais',p8:250,p4:350,p2:350,note:'Série Nano, 12 dB CF; mínimo 2 Ω; bridge 2 × 700 W'},
+ {b:'Next Pro',m:'NA2100 (2 canais)',ch:'2 canais',p8:60,p4:100,p2:0,br:{p8:200,p4:0},note:'Série Nano, 12 dB CF; mínimo 4 Ω; bridge 1 × 200 W em 8 Ω'},
+ {b:'Next Pro',m:'NA2350 (2 canais)',ch:'2 canais',p8:250,p4:350,p2:350,br:{p8:700,p4:700},note:'Série Nano, 12 dB CF; mínimo 2 Ω; bridge 1 × 700 W'},
+ {b:'Next Pro',m:'NA2650 (2 canais)',ch:'2 canais',p8:550,p4:650,p2:650,br:{p8:1300,p4:1300},note:'Série Nano, 12 dB CF; mínimo 2 Ω; bridge 1 × 1300 W'},
+ {b:'Next Pro',m:'NA4350 (4 canais)',ch:'4 canais',p8:250,p4:350,p2:350,br:{p8:700,p4:700},note:'Série Nano, 12 dB CF; mínimo 2 Ω; bridge 2 × 700 W'},
  {b:'Next Pro',m:'NA2350/70 (2 canais)',ch:'2 canais',p8:0,p4:0,p2:0,v70:300,note:'Série Nano: só linha 70 V, 300 W por canal'},
  {b:'Next Pro',m:'NA2650/70 (2 canais)',ch:'2 canais',p8:0,p4:0,p2:0,v70:600,note:'Série Nano: só linha 70 V, 600 W por canal'},
- {b:'Next Pro',m:'R2 (2 canais)',ch:'2 canais',p8:600,p4:1000,p2:1000,note:'Série Pro-R, 9 dB CF; mínimo 2 Ω; bridge 1 × 2000 W'},
- {b:'Next Pro',m:'R3 (2 canais)',ch:'2 canais',p8:800,p4:1400,p2:1800,note:'Série Pro-R, 9 dB CF; mínimo 2 Ω; bridge 1 × 2800 W em 8 Ω'},
+ {b:'Next Pro',m:'R2 (2 canais)',ch:'2 canais',p8:600,p4:1000,p2:1000,br:{p8:2000,p4:2000},note:'Série Pro-R, 9 dB CF; mínimo 2 Ω; bridge 1 × 2000 W'},
+ {b:'Next Pro',m:'R3 (2 canais)',ch:'2 canais',p8:800,p4:1400,p2:1800,br:{p8:2800,p4:3600,est4:1},note:'Série Pro-R, 9 dB CF; mínimo 2 Ω; bridge 1 × 2800 W em 8 Ω'},
  {b:'Next Pro',m:'R6 (2 canais)',ch:'2 canais',p8:1550,p4:2750,p2:3600,note:'Série Pro-R, 9 dB CF; mínimo 2 Ω; sem bridge'},
  {b:'Next Pro',m:'R7 (2 canais)',ch:'2 canais',p8:1800,p4:2800,p2:3700,note:'Série Pro-R, 9 dB CF; mínimo 2 Ω; sem bridge'},
- {b:'Next Pro',m:'R7Q (4 canais)',ch:'4 canais',p8:600,p4:1300,p2:1800,note:'Série Pro-R, 9 dB CF; mínimo 2 Ω; bridge 2 × 2600 W em 8 Ω'},
+ {b:'Next Pro',m:'R7Q (4 canais)',ch:'4 canais',p8:600,p4:1300,p2:1800,br:{p8:2600,p4:3600,est4:1},note:'Série Pro-R, 9 dB CF; mínimo 2 Ω; bridge 2 × 2600 W em 8 Ω'},
  {b:'Next Pro',m:'R10 (2 canais)',ch:'2 canais',p8:1800,p4:3000,p2:5000,note:'Série Pro-R, 9 dB CF; mínimo 2 Ω; sem bridge'},
- {b:'Next Pro',m:'R10Q (4 canais)',ch:'4 canais',p8:650,p4:1400,p2:2450,note:'Série Pro-R, 9 dB CF; mínimo 2 Ω; bridge 2 × 2800 W em 8 Ω'},
+ {b:'Next Pro',m:'R10Q (4 canais)',ch:'4 canais',p8:650,p4:1400,p2:2450,br:{p8:2800,p4:4900,est4:1},note:'Série Pro-R, 9 dB CF; mínimo 2 Ω; bridge 2 × 2800 W em 8 Ω'},
  {b:'Next Pro',m:'R15 (2 canais)',ch:'2 canais',p8:3000,p4:5000,p2:8000,note:'Série Pro-R, 9 dB CF; mínimo 2 Ω; sem bridge; dados preliminares'},
- {b:'Next Pro',m:'R15Q (4 canais)',ch:'4 canais',p8:1200,p4:2000,p2:3750,note:'Série Pro-R, 9 dB CF; mínimo 2 Ω; bridge 2 × 4000 W em 8 Ω; dados preliminares'},
+ {b:'Next Pro',m:'R15Q (4 canais)',ch:'4 canais',p8:1200,p4:2000,p2:3750,br:{p8:4000,p4:7500,est4:1},note:'Série Pro-R, 9 dB CF; mínimo 2 Ω; bridge 2 × 4000 W em 8 Ω; dados preliminares'},
  {b:'JBL',m:'DEE 4.1 (1 canal)',ch:'1 canal',p8:40,p4:80,p2:120,note:'sonorização ambiente com mixer, Bluetooth, USB, FM e DSP com presets JBL; aceita caixas de 4 a 8 Ω, mínimo 2 Ω por canal; 120 W em 2 Ω (JBL), 80 W em 4 Ω (revenda Audioprime) e 40 W em 8 Ω calculado pela tensão de 4 Ω'},
  {b:'JBL',m:'DEE 8.2 (2 canais)',ch:'2 canais',p8:40,p4:80,p2:120,note:'sonorização ambiente com mixer, Bluetooth, USB, FM e DSP com presets JBL; aceita caixas de 4 a 8 Ω, mínimo 2 Ω por canal; 120 W em 2 Ω (JBL), 80 W em 4 Ω (revenda Audioprime) e 40 W em 8 Ω calculado pela tensão de 4 Ω'},
  {b:'JBL',m:'DEE 16.4 (4 canais)',ch:'4 canais',p8:40,p4:80,p2:120,note:'sonorização ambiente com mixer, Bluetooth, USB, FM e DSP com presets JBL; aceita caixas de 4 a 8 Ω, mínimo 2 Ω por canal; 120 W em 2 Ω (JBL), 80 W em 4 Ω (revenda Audioprime) e 40 W em 8 Ω calculado pela tensão de 4 Ω'},
@@ -505,28 +512,28 @@ const AMPS=[
  {b:'JBL',m:'CSA 2120Z (2 canais)',ch:'2 canais',p8:120,p4:120,p2:0,v70:120,note:'linha comercial JBL para som ambiente: 120 W por canal, transformadores 70/100 V integrados'},
  {b:'JBL',m:'CSMA 240 mixer (2 canais)',ch:'2 canais',p8:40,p4:40,p2:0,v70:40,note:'mixer-amplificador comercial: 40 W em 4/8 Ω, estável de 2 a 16 Ω, saída 70 V'},
  {b:'JBL',m:'CSMA 280 mixer (2 canais)',ch:'2 canais',p8:80,p4:80,p2:0,v70:80,note:'mixer-amplificador comercial: 80 W em 4/8 Ω, estável de 2 a 16 Ω, saída 70 V'},
- {b:'Crown',m:'CDi 2|300BL (2 canais)',ch:'2 canais',p8:300,p4:300,p2:150,v70:300,note:'DriveCore: mesma potência em 4 Ω, 8 Ω e linha 70/100 V; BLU link'},
- {b:'Crown',m:'DCi 2|300N (2 canais)',ch:'2 canais',p8:300,p4:300,p2:150,v70:300,note:'DriveCore: mesma potência em 4 Ω, 8 Ω e linha 70/100 V; rede'},
- {b:'Crown',m:'DCi 2|600N (2 canais)',ch:'2 canais',p8:600,p4:600,p2:300,v70:600,note:'DriveCore: mesma potência em 4 Ω, 8 Ω e linha 70/100 V; rede'},
- {b:'Crown',m:'CDi 2|1200 (2 canais)',ch:'2 canais',p8:1200,p4:1200,p2:850,v70:1200,note:'DriveCore: mesma potência em 4 Ω, 8 Ω e linha 70/100 V'},
- {b:'Crown',m:'DCi 4|300 (4 canais)',ch:'4 canais',p8:300,p4:300,p2:150,v70:300,note:'DriveCore: mesma potência em 4 Ω, 8 Ω e linha 70/100 V'},
- {b:'Crown',m:'CDi 4|600 (4 canais)',ch:'4 canais',p8:600,p4:600,p2:300,v70:600,note:'DriveCore: mesma potência em 4 Ω, 8 Ω e linha 70/100 V'},
- {b:'Crown',m:'DCi 4|600 (4 canais)',ch:'4 canais',p8:600,p4:600,p2:300,v70:600,note:'DriveCore: mesma potência em 4 Ω, 8 Ω e linha 70/100 V'},
- {b:'Crown',m:'CDi 4|1200 (4 canais)',ch:'4 canais',p8:1200,p4:1200,p2:850,v70:1200,note:'DriveCore: mesma potência em 4 Ω, 8 Ω e linha 70/100 V'},
- {b:'Crown',m:'CDi 4|300BL (4 canais)',ch:'4 canais',p8:300,p4:300,p2:150,v70:300,note:'DriveCore: mesma potência em 4 Ω, 8 Ω e linha 70/100 V; BLU link'},
- {b:'Crown',m:'DCi 4|600N (4 canais)',ch:'4 canais',p8:600,p4:600,p2:300,v70:600,note:'DriveCore: mesma potência em 4 Ω, 8 Ω e linha 70/100 V; rede'},
- {b:'Crown',m:'CDi 4|600BL (4 canais)',ch:'4 canais',p8:600,p4:600,p2:300,v70:600,note:'DriveCore: mesma potência em 4 Ω, 8 Ω e linha 70/100 V; BLU link'},
- {b:'Crown',m:'CDi 4|1200BL (4 canais)',ch:'4 canais',p8:1200,p4:1200,p2:850,v70:1200,note:'DriveCore: mesma potência em 4 Ω, 8 Ω e linha 70/100 V; BLU link'},
- {b:'Crown',m:'DCi 4|2400N (4 canais)',ch:'4 canais',p8:2400,p4:2400,p2:null,v70:2400,note:'DriveCore: mesma potência em 4 Ω, 8 Ω e linha 70/100 V; 2 Ω não confirmado; rede'},
- {b:'Crown',m:'DCi 4|300DA (4 canais)',ch:'4 canais',p8:300,p4:300,p2:150,v70:300,note:'DriveCore: mesma potência em 4 Ω, 8 Ω e linha 70/100 V; Dante'},
- {b:'Crown',m:'DCi 4|600DA (4 canais)',ch:'4 canais',p8:600,p4:600,p2:300,v70:600,note:'DriveCore: mesma potência em 4 Ω, 8 Ω e linha 70/100 V; Dante'},
- {b:'Crown',m:'DCi 4|1250DA (4 canais)',ch:'4 canais',p8:1250,p4:1250,p2:1250,v70:1250,note:'DriveCore: mesma potência em 4 Ω, 8 Ω e linha 70/100 V; Dante'},
- {b:'Crown',m:'DCi 8|300 (8 canais)',ch:'8 canais',p8:300,p4:300,p2:150,v70:300,note:'DriveCore: mesma potência em 4 Ω, 8 Ω e linha 70/100 V'},
- {b:'Crown',m:'DCi 8|600 (8 canais)',ch:'8 canais',p8:600,p4:600,p2:300,v70:600,note:'DriveCore: mesma potência em 4 Ω, 8 Ω e linha 70/100 V'},
- {b:'Crown',m:'DCi 8|300N (8 canais)',ch:'8 canais',p8:300,p4:300,p2:150,v70:300,note:'DriveCore: mesma potência em 4 Ω, 8 Ω e linha 70/100 V; rede'},
- {b:'Crown',m:'DCi 8|300DA (8 canais)',ch:'8 canais',p8:300,p4:300,p2:150,v70:300,note:'DriveCore: mesma potência em 4 Ω, 8 Ω e linha 70/100 V; Dante'},
- {b:'Crown',m:'DCi 8|600N (8 canais)',ch:'8 canais',p8:600,p4:600,p2:300,v70:600,note:'DriveCore: mesma potência em 4 Ω, 8 Ω e linha 70/100 V; rede'},
- {b:'Crown',m:'DCi 8|600DA (8 canais)',ch:'8 canais',p8:600,p4:600,p2:300,v70:600,note:'DriveCore: mesma potência em 4 Ω, 8 Ω e linha 70/100 V; Dante'},
+ {b:'Crown',m:'CDi 2|300BL (2 canais)',ch:'2 canais',p8:300,p4:300,p2:150,v70:300,br:{p8:600,p4:300},note:'DriveCore: mesma potência em 4 Ω, 8 Ω e linha 70/100 V; BLU link'},
+ {b:'Crown',m:'DCi 2|300N (2 canais)',ch:'2 canais',p8:300,p4:300,p2:150,v70:300,br:{p8:600,p4:300},note:'DriveCore: mesma potência em 4 Ω, 8 Ω e linha 70/100 V; rede'},
+ {b:'Crown',m:'DCi 2|600N (2 canais)',ch:'2 canais',p8:600,p4:600,p2:300,v70:600,br:{p8:1200,p4:600},note:'DriveCore: mesma potência em 4 Ω, 8 Ω e linha 70/100 V; rede'},
+ {b:'Crown',m:'CDi 2|1200 (2 canais)',ch:'2 canais',p8:1200,p4:1200,p2:850,v70:1200,br:{p8:2400,p4:1700,est:1},note:'DriveCore: mesma potência em 4 Ω, 8 Ω e linha 70/100 V'},
+ {b:'Crown',m:'DCi 4|300 (4 canais)',ch:'4 canais',p8:300,p4:300,p2:150,v70:300,br:{p8:600,p4:300},note:'DriveCore: mesma potência em 4 Ω, 8 Ω e linha 70/100 V'},
+ {b:'Crown',m:'CDi 4|600 (4 canais)',ch:'4 canais',p8:600,p4:600,p2:300,v70:600,br:{p8:1200,p4:600},note:'DriveCore: mesma potência em 4 Ω, 8 Ω e linha 70/100 V'},
+ {b:'Crown',m:'DCi 4|600 (4 canais)',ch:'4 canais',p8:600,p4:600,p2:300,v70:600,br:{p8:1200,p4:600},note:'DriveCore: mesma potência em 4 Ω, 8 Ω e linha 70/100 V'},
+ {b:'Crown',m:'CDi 4|1200 (4 canais)',ch:'4 canais',p8:1200,p4:1200,p2:850,v70:1200,br:{p8:2400,p4:1700,est:1},note:'DriveCore: mesma potência em 4 Ω, 8 Ω e linha 70/100 V'},
+ {b:'Crown',m:'CDi 4|300BL (4 canais)',ch:'4 canais',p8:300,p4:300,p2:150,v70:300,br:{p8:600,p4:300},note:'DriveCore: mesma potência em 4 Ω, 8 Ω e linha 70/100 V; BLU link'},
+ {b:'Crown',m:'DCi 4|600N (4 canais)',ch:'4 canais',p8:600,p4:600,p2:300,v70:600,br:{p8:1200,p4:600},note:'DriveCore: mesma potência em 4 Ω, 8 Ω e linha 70/100 V; rede'},
+ {b:'Crown',m:'CDi 4|600BL (4 canais)',ch:'4 canais',p8:600,p4:600,p2:300,v70:600,br:{p8:1200,p4:600},note:'DriveCore: mesma potência em 4 Ω, 8 Ω e linha 70/100 V; BLU link'},
+ {b:'Crown',m:'CDi 4|1200BL (4 canais)',ch:'4 canais',p8:1200,p4:1200,p2:850,v70:1200,br:{p8:2400,p4:1700,est:1},note:'DriveCore: mesma potência em 4 Ω, 8 Ω e linha 70/100 V; BLU link'},
+ {b:'Crown',m:'DCi 4|2400N (4 canais)',ch:'4 canais',p8:2400,p4:2400,p2:null,v70:2400,br:{p8:4800,p4:null,est:1},note:'DriveCore: mesma potência em 4 Ω, 8 Ω e linha 70/100 V; 2 Ω não confirmado; rede'},
+ {b:'Crown',m:'DCi 4|300DA (4 canais)',ch:'4 canais',p8:300,p4:300,p2:150,v70:300,br:{p8:600,p4:300},note:'DriveCore: mesma potência em 4 Ω, 8 Ω e linha 70/100 V; Dante'},
+ {b:'Crown',m:'DCi 4|600DA (4 canais)',ch:'4 canais',p8:600,p4:600,p2:300,v70:600,br:{p8:1200,p4:600},note:'DriveCore: mesma potência em 4 Ω, 8 Ω e linha 70/100 V; Dante'},
+ {b:'Crown',m:'DCi 4|1250DA (4 canais)',ch:'4 canais',p8:1250,p4:1250,p2:1250,v70:1250,br:{p8:2500,p4:2500},note:'DriveCore: mesma potência em 4 Ω, 8 Ω e linha 70/100 V; Dante'},
+ {b:'Crown',m:'DCi 8|300 (8 canais)',ch:'8 canais',p8:300,p4:300,p2:150,v70:300,br:{p8:600,p4:300},note:'DriveCore: mesma potência em 4 Ω, 8 Ω e linha 70/100 V'},
+ {b:'Crown',m:'DCi 8|600 (8 canais)',ch:'8 canais',p8:600,p4:600,p2:300,v70:600,br:{p8:1200,p4:600},note:'DriveCore: mesma potência em 4 Ω, 8 Ω e linha 70/100 V'},
+ {b:'Crown',m:'DCi 8|300N (8 canais)',ch:'8 canais',p8:300,p4:300,p2:150,v70:300,br:{p8:600,p4:300},note:'DriveCore: mesma potência em 4 Ω, 8 Ω e linha 70/100 V; rede'},
+ {b:'Crown',m:'DCi 8|300DA (8 canais)',ch:'8 canais',p8:300,p4:300,p2:150,v70:300,br:{p8:600,p4:300},note:'DriveCore: mesma potência em 4 Ω, 8 Ω e linha 70/100 V; Dante'},
+ {b:'Crown',m:'DCi 8|600N (8 canais)',ch:'8 canais',p8:600,p4:600,p2:300,v70:600,br:{p8:1200,p4:600},note:'DriveCore: mesma potência em 4 Ω, 8 Ω e linha 70/100 V; rede'},
+ {b:'Crown',m:'DCi 8|600DA (8 canais)',ch:'8 canais',p8:600,p4:600,p2:300,v70:600,br:{p8:1200,p4:600},note:'DriveCore: mesma potência em 4 Ω, 8 Ω e linha 70/100 V; Dante'},
  {b:'Crown',m:'CTD-2125 (2 canais)',ch:'2 canais',p8:125,p4:125,p2:0,v70:125,note:'125 W em 4 Ω, 8 Ω e 70/100 V; Dante, DSP e power sharing'},
  {b:'Crown',m:'CTD-4125 (4 canais)',ch:'4 canais',p8:125,p4:125,p2:0,v70:125,note:'125 W em 4 Ω, 8 Ω e 70/100 V; Dante, DSP e power sharing'},
  {b:'Crown',m:'CTD-8125 (8 canais)',ch:'8 canais',p8:125,p4:125,p2:0,v70:125,note:'125 W em 4 Ω, 8 Ω e 70/100 V; Dante, DSP e power sharing'},
@@ -534,9 +541,9 @@ const AMPS=[
  {b:'JBL',m:'CSMA 1120 mixer (1 canal)',ch:'1 canal',p8:120,p4:120,p2:0,v70:120,note:'tabela: 120 W em 8 Ω e 70 V; 4 Ω não informado, considerado igual'},
  {b:'JBL',m:'CSMA 2120 mixer (2 canais)',ch:'2 canais',p8:120,p4:120,p2:0,v70:120,note:'tabela: 120 W em 8 Ω e 70 V; 4 Ω não informado, considerado igual'},
  {b:'Crown',m:'CDi 4000 (2 canais)',ch:'2 canais',p8:650,p4:null,p2:null,v70:1000,note:'tabela: 650 W por canal (8 Ω), 1000 W em 70 V; opera de 2 a 16 Ω'},
- {b:'Crown',m:'XLC 2500 (2 canais)',ch:'2 canais',p8:null,p4:500,p2:null,note:'tabela: 500 W por canal em 4 Ω; sem linha 70 V'},
- {b:'Crown',m:'XLC 2800 (2 canais)',ch:'2 canais',p8:null,p4:800,p2:null,note:'tabela: 800 W por canal em 4 Ω; sem linha 70 V'},
- {b:'Crown',m:'XLC 21300 (2 canais)',ch:'2 canais',p8:null,p4:1300,p2:null,note:'tabela: 1300 W por canal em 4 Ω; sem linha 70 V'},
+ {b:'Crown',m:'XLC 2500 (2 canais)',ch:'2 canais',p8:null,p4:500,p2:null,br:{p8:1000,p4:null,est:1},note:'tabela: 500 W por canal em 4 Ω; sem linha 70 V'},
+ {b:'Crown',m:'XLC 2800 (2 canais)',ch:'2 canais',p8:null,p4:800,p2:null,br:{p8:1600,p4:null,est:1},note:'tabela: 800 W por canal em 4 Ω; sem linha 70 V'},
+ {b:'Crown',m:'XLC 21300 (2 canais)',ch:'2 canais',p8:null,p4:1300,p2:null,br:{p8:2600,p4:null,est:1},note:'tabela: 1300 W por canal em 4 Ω; sem linha 70 V'},
  {b:'Crown',m:'DSi 2.0 MA4-D (4 canais)',ch:'4 canais',p8:null,p4:750,p2:null,note:'tabela: 750 W por canal, impedância não informada'},
  {b:'Crown',m:'DSi 2.0 SA4-D (4 canais)',ch:'4 canais',p8:null,p4:350,p2:null,note:'tabela: 350 W por canal, impedância não informada'},
  {b:'Crown',m:'DSi 2.0 MA4 (4 canais)',ch:'4 canais',p8:null,p4:750,p2:null,note:'tabela: 750 W por canal, impedância não informada'}
@@ -544,7 +551,13 @@ const AMPS=[
 let customAmps=[];try{customAmps=JSON.parse(localStorage.getItem('imp-amps')||'[]')}catch(e){}
 const allAmps=()=>AMPS.concat(customAmps);
 const ampBrands=()=>[...new Set(allAmps().map(a=>a.b))];
-function curAmp(){return st.useAmp?allAmps().find(a=>a.b===st.ampB&&a.m===st.ampM)||null:null}
+const brOf=a=>{if(!a||!a.br)return null;const k=Math.max(1,Math.floor(chOf(a)/2)),b=a.br,cn=k>1?'canais':'canal';
+  return {...a,base:a,isBr:true,m:`${a.m.replace(/\s*\([^)]*\)$/,'')} em bridge (${k} ${cn})`,ch:`${k} ${cn}`,p8:b.p8,p4:b.p4,p2:0,v70:0,
+    note:`modo bridge: ${k} ${cn} com ${fmt(b.p8)} W em 8 Ω${b.p4?` e ${fmt(b.p4)} W em 4 Ω`:b.p4===0?', carga mínima 8 Ω':''}${b.est?' · valores estimados (2× a potência por canal), confirme no manual':b.est4?' · valor em 4 Ω estimado, confirme no manual':''}`}};
+const baseAmp=()=>st.useAmp?allAmps().find(a=>a.b===st.ampB&&a.m===st.ampM)||null:null;
+const ampPool=()=>allAmps().flatMap(a=>a.br?[a,brOf(a)]:[a]);
+const sameA=(x,y)=>!!x&&!!y&&x.b===y.b&&x.m===y.m;
+function curAmp(){const a=baseAmp();return a&&st.bridge&&a.br?brOf(a):a}
 function ampVals(){const a=curAmp();if(a)return {p8:a.p8||0,p4:a.p4||0,p2:a.p2||0,no2:!a.p2,no4:a.p4===0,model:1};
   const p8=+st.pch||0;if(st.flex)return {p8,p4:p8,p2:p8};return {p8,p4:+st.pch4||0,p2:+st.pch2||0}}
 function applyAmp(){const a=curAmp();if(!a)return;st.pch=a.p8;st.pch4=a.p4;st.pch2=a.p2||'';st.min=a.p2?2:(a.p4===0?8:4);st.max=8;st.sel=null}
@@ -554,8 +567,9 @@ function renderAmp(){
   const bs=ampBrands();if(st.useAmp&&!bs.includes(st.ampB))st.ampB=bs[0];
   $('ampB').innerHTML=bs.map(b=>`<option${b===st.ampB?' selected':''}>${b}</option>`).join('');
   const ms=allAmps().filter(x=>x.b===st.ampB);
-  $('ampM').innerHTML=`<option value="">Escolha o modelo</option>`+ms.map(x=>`<option${x.m===st.ampM?' selected':''}>${x.m}</option>`).join('');
-  const fv=(v,z)=>v==null?`${z}: não informado`:v===0?`não trabalha em ${z}`:`${fmt(v)} W em ${z}`;$('ampInfo').textContent=a?`${fv(a.p8,'8 Ω')} · ${fv(a.p4,'4 Ω')} · ${fv(a.p2,'2 Ω')} (por canal)${a.v70?` · linha 70/100 V: ${fmt(a.v70)} W`:''}${a.note?' · '+a.note:''}`:'';
+  $('ampM').innerHTML=`<option value="">Escolha o modelo</option>`+ms.map(x=>`<option value="${x.m.replace(/"/g,'&quot;')}"${x.m===st.ampM?' selected':''}>${x.m}${x.br?' · aceita bridge':''}</option>`).join('');
+  const fv=(v,z)=>v==null?`${z}: não informado`:v===0?`não trabalha em ${z}`:`${fmt(v)} W em ${z}`;$('ampInfo').textContent=a?`${fv(a.p8,'8 Ω')} · ${fv(a.p4,'4 Ω')} · ${fv(a.p2,'2 Ω')} (por canal${a.isBr?' em bridge':''})${a.v70?` · linha 70/100 V: ${fmt(a.v70)} W`:''}${a.note?' · '+a.note:''}`:'';
+  {const ba=baseAmp();$('brTog').hidden=!(ba&&ba.br);$('brTog').setAttribute('aria-checked',!!(ba&&ba.br&&st.bridge))}
   $('flexTog').hidden=!!a;$('flexTog').setAttribute('aria-checked',!!st.flex);
   const labs=document.querySelectorAll('#pchDims label');
   ['pch','pch4','pch2'].forEach((i,n)=>{const el=$(i),val=[v.p8,v.p4,v.p2][n];el.disabled=!!a||(st.flex&&n>0);
@@ -1104,20 +1118,23 @@ const resHTML=c=>`<div class="rhead"><div class="big">${fmt(c.zt+cabR())} Ω</di
 function sugD(r){if(r.n<2||!(+r.L>0&&+r.W>0))return 0;const P=(st.mount==='sobrepor'?wallLayout(r.n,+r.L,+r.W,st.uni!==false):layout(r.n,+r.L,+r.W,'auto',0)).P;let t=0;for(let i=1;i<P.length;i++)t+=Math.hypot(P[i][0]-P[i-1][0],P[i][1]-P[i-1][1]);return Math.round(t/(P.length-1)*10)/10}
 const hasV=v=>v!==''&&v!=null;
 function roomCab(r){return {cabL:hasV(r.cabL)?r.cabL:st.cabL,cabD:hasV(r.cabD)?r.cabD:sugD(r)}}
-function roomPick(R){Object.assign(st,roomCab(R));st.n=R.n;st.sel=R.sel;const list=configs();if(!list.find(x=>x.id===st.sel))st.sel=list[0].id;R.sel=st.sel;return {list,c:list.find(x=>x.id===st.sel)}}
-function ampChk(){const a=curAmp(),nr=rooms().length;if(!a)return '';const ch=chOf(a);return ch>=nr?`<li class="ok">${a.b} ${a.m}: ${ch} canais para ${nr} salas, um canal por sala${ch>nr?` (sobram ${ch-nr})`:''}.</li>`:`<li class="warn">${a.b} ${a.m} tem ${ch} ${ch>1?'canais':'canal'} para ${nr} salas: falta${nr-ch>1?'m':''} ${nr-ch} ${nr-ch>1?'canais':'canal'}. Use um multicanal maior ou mais um amplificador.</li>`}
+function roomPick(R){Object.assign(st,roomCab(R));st.n=st.multi?R.n/(R.k||1):R.n;st.sel=R.sel;const list=configs();if(!list.find(x=>x.id===st.sel))st.sel=list[0].id;R.sel=st.sel;return {list,c:list.find(x=>x.id===st.sel)}}
+function ampChk(){const a=curAmp(),R=rooms(),nr=R.length;if(!a)return '';const ch=chOf(a),u=R.reduce((s,r)=>s+(r.k||1),0);return ch>=nr?`<li class="ok">${a.b} ${a.m}: ${ch} canais para ${nr} salas${u>nr?`, ${u} em uso (as salas maiores recebem mais de um canal)`:', um canal por sala'}${ch>u?` (sobra${ch-u>1?"m":""} ${ch-u})`:''}.</li>`:`<li class="warn">${a.b} ${a.m} tem ${ch} ${ch>1?'canais':'canal'} para ${nr} salas: falta${nr-ch>1?'m':''} ${nr-ch} ${nr-ch>1?'canais':'canal'}. Use um multicanal maior ou mais um amplificador.</li>`}
 const acOn=()=>!!st.allCh&&!st.multi;
 const acCh=()=>{const a=curAmp();return a?chOf(a):Math.max(1,Math.min(16,+st.acMan||2))};
 function chGroups(){const k=Math.max(1,Math.min(acCh(),st.n)),b=Math.floor(st.n/k),x=st.n%k;if(!Array.isArray(st.CG))st.CG=[];
   for(let i=0;i<k;i++){const n=b+(i<x?1:0);if(!st.CG[i])st.CG[i]={};if(st.CG[i].n!==n){st.CG[i].n=n;st.CG[i].sel=null}st.CG[i].cabL=st.cabL;st.CG[i].cabD=st.cabD;st.CG[i].lbl=`Canal ${i+1}`}return st.CG.slice(0,k)}
-function groups(){return st.multi?rooms().map((r,i)=>(r.lbl=`Sala ${i+1}`,r)):acOn()?chGroups():[]}
+function roomKsCur(){const R=rooms(),a=curAmp(),pk=+st.pspk||0;let ks=R.map(()=>1);
+  if(a&&!st.trafo&&pk&&chOf(a)>R.length&&R.every(r=>r.n>0)){const e=mrEval(avOf(a),st.z,pk,st.min,st.max,chOf(a));if(e)ks=e.ks}return ks}
+function groups(){if(!st.multi)return acOn()?chGroups():[];const R=rooms(),ks=roomKsCur();return R.map((r,i)=>(r.k=ks[i],r.lbl=r.k>1?`Sala ${i+1} (${r.k} canais × ${r.n/r.k} caixas)`:`Sala ${i+1}`,r))}
+const chTxt=(r,i)=>{if(!st.multi)return `canal ${i+1} do amplificador`;const R=rooms();let c0=1;for(let j=0;j<i;j++)c0+=R[j].k||1;const k=r.k||1;return k>1?`canais ${c0} a ${c0+k-1} do amplificador, ${r.n/k} caixas em cada: ligue igual nos ${k} canais`:`canal ${c0} do amplificador`};
 function renderRooms(){
   const keep={n:st.n,sel:st.sel,cur,cabL:st.cabL,cabD:st.cabD},R=groups(),ac=acOn();let html='',sum='',need=false;
   R.forEach((r,i)=>{const {list,c}=roomPick(r);need=need||st.need;let res,fig,op='';
     if(st.trafo){renderTrafo();res=$('result').innerHTML;fig=$('fig').innerHTML;sum+=`<li><b>${r.lbl}</b> · ${r.n} alto-falante${r.n>1?'s':''} · linha ${st.vline} V · ${fmt(trafo().P)} W</li>`}
     else{res=resHTML(c);draw(c);fig=$('fig').innerHTML;op=`<div class="opts">${list.map(x=>`<button type="button" class="opt" data-room="${i}" data-id="${x.id}" aria-pressed="${x.id===st.sel}"><span>${x.name}<small>${TAG[x.st]}${x.r?' · com resistor':''}</small></span><b>${fmt(x.zt+cabR())} Ω</b></button>`).join('')}</div>`;
       const al=(ampLines(c).find(l=>l.amp)||{}).amp;sum+=`<li class="${c.st!=='ok'||al==='low'?'warn':''}"><b>${r.lbl}</b> · ${r.n} alto-falante${r.n>1?'s':''} · ${fmt(c.zt+cabR())} Ω · ${TAG[c.st].toLowerCase()}${al==='low'?' · amplificador insuficiente':al==='ok'?' · potência ideal':''}</li>`}
-    html+=`<section class="room"><h2 class="roomH">${r.lbl}</h2><p class="roomS">${r.n} alto-falante${r.n>1?'s':''}${mlabel()?` · ${mlabel()}`:''} · canal ${i+1} do amplificador</p><div class="roomGrid"><div class="scroll">${fig}</div><div class="result">${res}</div></div>${op?`<p class="lbl" style="margin:12px 0 0">Opções de ligação · ${r.lbl.toLowerCase()}</p>${op}`:''}</section>`});
+    html+=`<section class="room"><h2 class="roomH">${r.lbl}</h2><p class="roomS">${r.n} alto-falante${r.n>1?'s':''}${mlabel()?` · ${mlabel()}`:''} · ${chTxt(r,i)}</p><div class="roomGrid"><div class="scroll">${fig}</div><div class="result">${res}</div></div>${op?`<p class="lbl" style="margin:12px 0 0">Opções de ligação · ${r.lbl.toLowerCase()}</p>${op}`:''}</section>`});
   st.n=keep.n;st.sel=keep.sel;cur=keep.cur;st.cabL=keep.cabL;st.cabD=keep.cabD;st.need=need;
   $('roomsOut').innerHTML=html;
   $('fig').innerHTML=`<div class="result" style="position:static"><p class="cname" style="margin-top:0">${ac?`Resumo dos ${R.length} canais`:`Resumo das ${R.length} salas`}</p><ul class="msum">${sum}${ac?'':ampChk()}</ul><p class="unit" style="margin:8px 0 0">${ac?'Esquema e descritivo de cada canal logo abaixo.':'Esquema e descritivo de cada sala logo abaixo.'}</p></div>`;
@@ -1217,14 +1234,15 @@ $('acMan').oninput=e=>{st.acMan=e.target.value;render()};
 $('covRoomsOut').onclick=e=>{const b=e.target.closest('[data-usen]');if(b){const R=rooms(),i=+b.dataset.usen,o=R[i].n;R[i].n=Math.min(32,+b.dataset.v);st.ampRev=`sala ${i+1}: de ${o} para ${R[i].n}`;st.ampRevR=i;setTimeout(arModal,0);R[+b.dataset.usen].sel=null;$('rList').innerHTML='';$('covRIn').innerHTML='';$('cabRooms').innerHTML='';render()}};
 $('sugATog').onclick=()=>{st.sugA=!st.sugA;st.sugCol=false;if(!st.sugA&&st.sugK){st.n=st.sugK.total;st.sugK=null}if(st.sugA)st.sugS=false;render()};
 $('sugSTog').onclick=()=>{st.sugS=!st.sugS;st.sugCol=false;if(!st.sugS&&st.sugK){st.n=st.sugK.total;st.sugK=null}if(st.sugS)st.sugA=false;render()};
-$('sugA').onclick=e=>{if(e.target.closest('[data-open]')){st.sugCol=false;render();return}const b=e.target.closest('[data-amp]');if(!b)return;const t0=decodeURIComponent(b.dataset.amp),B=t0.slice(0,t0.indexOf('|')),M=t0.slice(t0.indexOf('|')+1);st.useAmp=true;st.ampB=B;st.ampM=M;st.ampRev=null;applyAmp();setK(+b.dataset.k);useSels(b.dataset.sel,+b.dataset.k);render()};
+$('sugA').onclick=e=>{if(e.target.closest('[data-open]')){st.sugCol=false;render();return}const b=e.target.closest('[data-amp]');if(!b)return;const t0=decodeURIComponent(b.dataset.amp),B=t0.slice(0,t0.indexOf('|')),M=t0.slice(t0.indexOf('|')+1),hit=ampPool().find(a=>a.b===B&&a.m===M);st.useAmp=true;st.ampB=B;st.ampM=hit&&hit.base?hit.base.m:M;st.bridge=!!(hit&&hit.base);st.ampRev=null;applyAmp();setK(+b.dataset.k);useSels(b.dataset.sel,+b.dataset.k);render()};
 $('sugS').onclick=e=>{if(e.target.closest('[data-open]')){st.sugCol=false;render();return}const t=e.target.closest('[data-tf]');if(t){st.sugT=t.dataset.tf;render();return}const b=e.target.closest('[data-spk]');if(!b)return;const t0=decodeURIComponent(b.dataset.spk),B=t0.slice(0,t0.indexOf('|')),M=t0.slice(t0.indexOf('|')+1);st.useModel=true;st.brand=B;st.model=M;applyModel();setK(+b.dataset.k);st.sel=null;useSels(b.dataset.sel,+b.dataset.k);render()};
 function useSels(t,k){const ids=(t||'').split(',').filter(Boolean);if(!ids.length||st.multi)return;if(st.allCh){const sz=dist(st.n,Math.max(1,Math.min(k,st.n)));st.CG=sz.map((n,i)=>({n,sel:ids[i]||null}))}else st.sel=ids[0]}
 function setK(k){st.sugCol=true;if(st.multi)return;if(st.allCh){st.sel=null;return}const N=sugN();st.sugK=k>1?{total:N,k}:null;st.n=N/k;st.sel=null}
 $('aTog').onclick=()=>{st.useAmp=!st.useAmp;if(st.useAmp)applyAmp();render()};
-$('ampB').onchange=e=>{st.ampB=e.target.value;st.ampM='';render()};
-$('ampM').onchange=e=>{st.ampM=e.target.value;st.ampRev=null;applyAmp();render()};
+$('ampB').onchange=e=>{st.ampB=e.target.value;st.ampM='';st.bridge=false;render()};
+$('ampM').onchange=e=>{st.ampM=e.target.value;st.bridge=false;st.ampRev=null;applyAmp();render()};
 $('flexTog').onclick=()=>{st.flex=!st.flex;render()};
+$('brTog').onclick=()=>{st.bridge=!st.bridge;applyAmp();render()};
 $('aaSave').onclick=()=>{const b=$('aaB').value.trim(),m=$('aaM').value.trim(),p8=+$('aa8').value||0,p4=+$('aa4').value||0,p2=+$('aa2').value||0;
   if(!b||!m||!p8||!p4){$('aaMsg').textContent='Preencha marca, modelo e as potências em 8 e 4 Ω.';return}
   customAmps=customAmps.filter(x=>!(x.b===b&&x.m===m));customAmps.push({b,m,p8,p4,p2,own:1});try{localStorage.setItem('imp-amps',JSON.stringify(customAmps))}catch(e){}
