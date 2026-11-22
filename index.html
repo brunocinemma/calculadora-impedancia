@@ -1363,10 +1363,14 @@ async function deliver(b,name,isImg){
   if(dl){try{await dl.save({filename:name,data:b});msg(isImg?'Imagem salva.':'PDF salvo.');return}
     catch(e){if(e&&e.code==='declined'){msg('Exportação cancelada.');return}if(e&&e.code==='rate_limited'){msg('Aguarde um instante e tente de novo.');return}}}
   const file=new File([b],name,{type:isImg?'image/jpeg':'application/pdf'});
-  if(matchMedia('(pointer:coarse)').matches&&navigator.canShare&&navigator.canShare({files:[file]})){
-    try{await navigator.share({files:[file],title:name});msg('');return}catch(e){if(e&&e.name==='AbortError'){msg('');return}}}
-  if(isImg&&matchMedia('(pointer:coarse)').matches){msg('');showOv(b);return}
-  try{const u=URL.createObjectURL(b),l=document.createElement('a');l.href=u;l.download=name;document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);msg(isImg?'Imagem salva.':'PDF gerado.')}catch(e){msg('Não foi possível salvar o PDF aqui.')}
+  const save=()=>{try{const u=URL.createObjectURL(b),l=document.createElement('a');l.href=u;l.download=name;document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(u),8000);msg(isImg?'Imagem salva em Downloads.':'PDF salvo em Downloads.')}catch(e){msg('Não foi possível salvar o arquivo aqui.')}};
+  const canSh=!!(navigator.canShare&&navigator.canShare({files:[file]}));
+  if(!matchMedia('(pointer:coarse)').matches||!canSh){save();return}
+  msg('');const d=document.createElement('div');d.className='mdl';d.setAttribute('role','dialog');d.setAttribute('aria-modal','true');
+  d.innerHTML=`<div style="background:var(--box,#fff);color:inherit;border-radius:16px;padding:18px;max-width:380px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,.4)"><p style="margin:0 0 4px;font-weight:700;font-size:17px">${isImg?'Imagem pronta':'PDF pronto'}</p><p class="unit" style="margin:0 0 14px;word-break:break-all">${name}</p><div style="display:grid;gap:10px"><button type="button" data-dl="save" style="padding:13px;border-radius:12px;font:inherit;font-weight:600;font-size:16px;cursor:pointer;width:100%;border:0;background:var(--ink);color:var(--bg)">⬇ Baixar no celular</button><button type="button" data-dl="share" style="padding:13px;border-radius:12px;font:inherit;font-weight:600;font-size:16px;cursor:pointer;width:100%;border:1px solid var(--line);background:var(--panel);color:var(--ink)">↗ Compartilhar</button><button type="button" class="chip" data-dl="x" style="justify-self:center">Cancelar</button></div></div>`;
+  d.onclick=async e=>{const t=e.target.closest('[data-dl]');if(!t&&e.target!==d)return;d.remove();if(!t)return;
+    if(t.dataset.dl==='save')save();else if(t.dataset.dl==='share'){try{await navigator.share({files:[file],title:name});msg('')}catch(err){if(!(err&&err.name==='AbortError'))save()}}};
+  document.body.appendChild(d);
 }
 $('exp').onclick=()=>{const o=$('expMenu').hidden;$('expMenu').hidden=!o;$('exp').setAttribute('aria-expanded',o)};
 $('expJpg').onclick=async()=>{msg('Gerando imagem…');let b;try{b=await makeJpgAll()}catch(e){msg('Não foi possível gerar a imagem.');return}deliver(b,st.multi?`multiroom-${rooms().length}-salas.jpg`:acOn()?`${st.n}af-${groups().length}-canais.jpg`:fname('jpg'),true)};
