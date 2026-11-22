@@ -105,6 +105,8 @@ select{width:100%;height:46px;font:16px inherit;font-family:inherit;color:var(--
 .ov{position:fixed;inset:0;z-index:9;background:rgba(0,0,0,.75);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px;color:#fff;text-align:center}
 .ov img{max-width:100%;max-height:75vh;border-radius:8px;background:#fff}
 .ov[hidden]{display:none}
+.caution .chip{background:#fff;color:#4a3800;border:1px solid #c99a00}.caution .chip.pri{background:#4a3800;color:#fff;border-color:#4a3800}
+.mdl{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:999;padding:20px}.mdl .caution{max-width:420px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,.4);font-size:15px;margin:0}.mdl .caution b{font-size:18px}
 .caution{background:#fff3c4;border:2px solid #e0b400;color:#4a3800;border-radius:10px;padding:10px 12px;margin:10px 0;font-size:14px;line-height:1.45}.caution b{display:block;font-size:15px;margin-bottom:4px}
 li.caut{color:#8a6a00;font-weight:600}
 .rlist{display:flex;flex-direction:column;gap:8px;margin-top:10px}
@@ -145,6 +147,7 @@ li.caut{color:#8a6a00;font-weight:600}
 <div class="panel">
 <div class="field"><span class="lbl">Caixas</span>
 <button type="button" class="tog" id="mTog" role="switch" aria-checked="false"><span class="sw"></span><span>Usar marca/modelo</span></button>
+<div id="arImp"></div>
 <div class="sugRow"><button type="button" class="tog sugT" id="sugATog" role="switch" aria-checked="false"><span class="sw"></span><span>Sugestão de amplificadores</span></button><button type="button" class="sugX" id="sugAX" aria-label="Expandir lista" hidden>▾</button></div>
 <div id="sugA" class="sug" hidden></div>
 <div id="mOpts" hidden>
@@ -227,7 +230,7 @@ li.caut{color:#8a6a00;font-weight:600}
 <div class="opts" id="opts"></div>
 <p class="note">Cálculo para alto-falantes iguais (mesma impedância nominal). A impedância real varia com a frequência; use o valor nominal como referência e respeite o mínimo do amplificador.</p>
 </div>
-<div id="pgCov" hidden><div class="app">
+<div id="pgCov" hidden><div class="app"><div id="arCov"></div>
 <section><div class="panel">
 <div class="field"><span class="lbl">Espaço a cobrir</span>
 <div id="covRIn" class="rlist" hidden></div>
@@ -311,8 +314,9 @@ function chP(Z,av=ampVals()){
 const avOf=a=>({p8:a.p8||0,p4:a.p4||0,p2:a.p2||0,no2:!a.p2,no4:a.p4===0});
 function withSt(o,f){const k=Object.keys(o).concat('need'),old={};k.forEach(x=>old[x]=st[x]);Object.assign(st,o);try{return f()}finally{k.forEach(x=>st[x]=old[x])}}
 const chOf=a=>{if(!a)return 1;const m=/(\d+) canai?s?/.exec(a.ch||a.m);return m?+m[1]:1};
-function bestCfg(n,z,pk,mn,mx,av){return withSt({n,z,min:mn,max:mx,sel:null},()=>{let b=null;
-  for(const c of configs()){if(c.st!=='ok')continue;const Z=c.zt+cabR(),q=chP(Z,av),r=q.p/(pk*c.slots);if(!q.p||r<1||q.no4||q.no2)continue;const sc=rScore(r)+(c.r?.01:0);if(!b||sc<b.sc)b={c,Z,q,r,sc}}return b})}
+const CFGC=new Map();
+function bestCfg(n,z,pk,mn,mx,av){return withSt({n,z,min:mn,max:mx,sel:null},()=>{let b=null;const ck=[n,z,mn,mx,st.res,st.trafo,cabR()].join('|');let cl=CFGC.get(ck);if(!cl){cl=configs().filter(c=>c.st==='ok');CFGC.set(ck,cl)}
+  for(const c of cl){if(c.st!=='ok')continue;const Z=c.zt+cabR(),q=chP(Z,av),r=q.p/(pk*c.slots);if(!q.p||r<1||q.no4||q.no2)continue;const sc=rScore(r)+(c.r?.01:0);if(!b||sc<b.sc)b={c,Z,q,r,sc}}return b})}
 const dist=(N,k)=>Array.from({length:k},(_,i)=>Math.floor(N/k)+(i<N%k?1:0));
 function split(av,ch,N,z,pk,mn,mx,fk){let best=null;
   const ks=fk?[Math.max(1,Math.min(fk,N))]:Array.from({length:Math.min(ch,N)},(_,i)=>i+1).filter(k=>N%k===0);
@@ -373,7 +377,7 @@ function sugSpk(){
     L.push({m,...x,sub:`${kTxt(x)}${fmt(m.z)} Ω · ${fmt(m.p)} W · ${m.tipo||''} · ${fmt(x.q.p/x.c.slots)} W para cada = ${fmt(x.r)}×`,tag:rTag(x.r)})});
   L.sort((x,y)=>x.sc-y.sc||y.m.p-x.m.p);
   return L.length?{L:L.slice(0,8),head:`Para ${N} alto-falantes${ch>1?` em até ${ch} canais`:''} neste amplificador (ideal: 1,5 a 2× a soma):`}:{msg:'Nenhum modelo cadastrado fica ideal com este amplificador e esta quantidade.'}}
-function renderSug(){
+function renderSug(){CFGC.clear();
   $('sugATog').setAttribute('aria-checked',!!st.sugA);$('sugSTog').setAttribute('aria-checked',!!st.sugS);
   $('sugATog').disabled=!!st.sugS;$('sugSTog').disabled=!!st.sugA;
   $('sugA').hidden=!st.sugA;$('sugS').hidden=!st.sugS;
@@ -695,7 +699,7 @@ const DB=[
  {b:'JBL',m:"6W21RT (embutir retangular 6\")",tipo:'embutir',z:8,p:25,src:'ficha JBL'},
  {b:'JBL',m:"6FR1Q (embutir quadrada 6\" full range)",tipo:'embutir',z:8,p:50,src:'ficha JBL'},
  {b:'JBL',m:"6FR2R (embutir redonda 6\" full range)",tipo:'embutir',z:8,p:50,src:'ficha JBL'},
- {b:'JBL',m:"Control 1 Pro (sobrepor 5,25\")",tipo:'sobrepor',z:4,p:150,src:'ficha JBL'},
+ {b:'JBL',m:"Control 1 Pro (sobrepor 5,25\")",tipo:'sobrepor',ang:120,z:4,p:150,src:'ficha JBL'},
  {b:'JBL',m:"Control SA5-Pro (sobrepor 5,25\")",tipo:'sobrepor',z:8,p:80,src:'ficha JBL'},
  {b:'JBL',m:"Control SA6-Pro (sobrepor 6,5\")",tipo:'sobrepor',z:8,p:100,src:'ficha JBL'},
  {b:'JBL',m:"C321B (sobrepor 3\")",tipo:'sobrepor',z:8,p:30,src:'ficha JBL'},
@@ -839,7 +843,7 @@ const hasTaps=m=>m&&((m.t70&&m.t70.length)||(m.t100&&m.t100.length));
 const modelTaps=m=>(+st.vline===100?m.t100:m.t70)||[];
 function applyModel(){
   const m=curModel();if(!m)return;
-  if(m.ang)st.cAng=m.ang;if(m.tipo)st.mount=m.tipo;if(m.z)st.z=m.z;if(m.p)st.pspk=m.p;
+  {const a=m.ang||angOv(m);if(a)st.cAng=a}if(m.tipo)st.mount=m.tipo;if(m.z)st.z=m.z;if(m.p)st.pspk=m.p;
   if(hasTaps(m)){if(!m.z)st.trafo=true;if(+st.vline===100&&!(m.t100&&m.t100.length))st.vline=70;if(+st.vline===70&&!(m.t70&&m.t70.length))st.vline=100;
     const t=modelTaps(m);if(!t.includes(+st.tap))st.tap=t[0];}
   else st.trafo=false;
@@ -889,10 +893,10 @@ function covWall(L,W,H,ear,ang,n){
   const hs=+st.hs||2.2,half=ang/2*Math.PI/180,rowS=ROWS[st.crit]||6,cr=CRIT[st.crit]||CRIT.eq,uni=st.uni!==false;
   const wid=2*rowS*Math.tan(Math.min(half,1.4)),perRow=Math.max(W>3?2:1,Math.ceil(W/wid)),rows=Math.max(1,Math.ceil(L/rowS)),Nrec=perRow*rows;
   const lay=wallLayout(n,L,W,uni);
-  const cs=Math.max(L,W)/110,nx=Math.ceil(L/cs),ny=Math.ceil(W/cs),G=new Float32Array(nx*ny),vals=[];
+  const cs=Math.max(L,W)/(st._rq||110),nx=Math.ceil(L/cs),ny=Math.ceil(W/cs),G=new Float32Array(nx*ny),vals=[];
   for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){const px=(i+.5)*cs,py=(j+.5)*cs;let e=0;
     lay.P.forEach(([sx,sy],q)=>{const [ax,ay]=lay.A[q],vx=px-sx,vy=py-sy,vz=ear-hs,d=Math.hypot(vx,vy,vz),c=(ax*vx+ay*vy)/d,phi=Math.acos(Math.max(-1,Math.min(1,c))),dir=c<=0?-24:Math.max(-24,-6*(phi/half)**2);e+=10**(dir/10)/Math.max(d*d,0.25)});
-    const v=10*Math.log10(e);G[j*nx+i]=v;vals.push(v)}
+    const v=10*Math.log10(e);G[j*nx+i]=v;if(inA(px,py,L,W))vals.push(v)}
   const sorted=vals.slice().sort((a,b)=>a-b),mx=sorted[sorted.length-1],p5=sorted[Math.floor(sorted.length*.05)],p95=sorted[Math.floor(sorted.length*.95)];
   return {wall:1,uni,hs,half,rowS,perRow,L,W,H,ear,ang,n,h:H-ear,r:0,s:rowS,cr,cols:rows,rows:perRow,Nrec,lay,G,nx,ny,cs,mx,spread:p95-p5,recDx:L/rows,recDy:W/perRow};
 }
@@ -901,25 +905,41 @@ function wallLines(k){
   L.push({t:`Caixas de sobrepor na parede, a ${fmt(k.hs)} m do piso, ${k.uni?'todas apontadas na mesma direção (da frente para o fundo); as de trás funcionam como reforço (delay)':'metade em cada parede, apontadas uma para a outra'}`});
   if(!k.uni)L.push({t:'Caixas apontadas uma para a outra: o som se cruza no centro e pode causar cancelamentos e eco. Prefira a orientação única.',cls:'warn'});
   L.push({t:`Com ${fmt(k.ang)}° de cobertura, para ${k.cr[0].toLowerCase()} use uma fileira de caixas a cada ${fmt(k.rowS)} m de profundidade`});
-  L.push({t:`Para ${fmt(k.L)} × ${fmt(k.W)} m: ${k.Nrec} caixas (${k.cols} fileira${k.cols>1?'s':''} de ${k.perRow})`,cls:'res'});
+  L.push({t:`Para ${fmt(k.L)} × ${fmt(k.W)} m: ${k.Nrec} caixa${k.Nrec>1?'s':''} (${rowTxt(k)})`,cls:'res'});
   const lv=k.spread<=3?'ótima':k.spread<=6?'boa para música ambiente':'irregular';
   L.push({t:`Com ${k.n} caixa${k.n>1?'s':''}: variação de ${fmt(k.spread)} dB no ambiente · cobertura ${lv}`,cls:k.spread>6?'warn':''});
-  if(k.n<k.Nrec)L.push({t:`Faltam ${k.Nrec-k.n} caixa${k.Nrec-k.n>1?'s':''} para a cobertura recomendada.`,cls:'warn'});
+  if(k.better&&k.n<k.Nrec)L.push({t:`Faltam ${k.Nrec-k.n} caixa${k.Nrec-k.n>1?'s':''} para a cobertura recomendada.`,cls:'warn'});
   if(k.uni&&k.lay.np>1)L.push({t:`Nas fileiras de reforço, ajuste no processador ou amplificador um atraso (delay) de cerca de 2,9 ms por metro de distância da primeira fileira: ${fmt(k.lay.dx)} m ≈ ${fmt(k.lay.dx*2.9)} ms.`});
-  L.push({t:'Mapa relativo (0 dB = ponto mais forte), considerando todas com a mesma potência; paredes e móveis não entram no cálculo.'});
+  L.push({t:'Mapa relativo (0 dB = ponto mais forte), considerando todas com a mesma potência; paredes e móveis não entram no cálculo. A variação é medida a partir de 0,5 m das paredes, onde as pessoas circulam.'});
   return L;
 }
-function covCalc(){
+const RECT={musica:6,eq:4.5,voz:3},RC=new Map();
+const rowTxt=k=>{const sz=dist(k.Nrec,k.cols);return k.cols===1?`1 fileira de ${k.Nrec}`:sz.every(v=>v===sz[0])?`${k.cols} fileiras de ${sz[0]}`:`${k.cols} fileiras: ${sz.join(' + ')}`};
+const EDGE=0.5,inA=(x,y,L,W)=>Math.min(L,W)<=2.5||(x>=EDGE&&x<=L-EDGE&&y>=EDGE&&y<=W-EDGE);
+function covCalc(){const k=covCalc0();if(!k.err)applyRec(k);return k}
+function applyRec(k){
+  const tgt=RECT[st.crit]||4.5,key=[k.wall?1:0,k.L,k.W,k.H,k.ear,k.ang,st.crit,st.spc,+st.cabD||0,st.mount,st.hs,st.uni].join('|');
+  let sp=RC.get(key);if(!sp){sp=[];RC.set(key,sp);if(RC.size>60)RC.delete(RC.keys().next().value)}
+  const g=i=>sp[i]!=null?sp[i]:(sp[i]=withSt({n:i,_rq:40},()=>{const x=covCalc0();return x.err?99:x.spread}));
+  let N=0;for(let i=1;i<=40;i++)if(g(i)<=tgt){N=i;break}
+  if(!N){let b=1;for(let i=2;i<=40;i++)if(g(i)<g(b)-0.3)b=i;N=b}
+  const fine=N===k.n?k.spread:withSt({n:N},()=>covCalc0().spread);sp[N]=fine;
+  k.tgt=tgt;k.recSp=fine;k.Nrec=N;k.better=N!==k.n&&sp[N]<k.spread-0.3;
+  if(!k.wall){const g=cgrid(N,k.L,k.W);k.cols=g.c;k.rows=g.r;k.recDx=k.L/g.c;k.recDy=k.W/g.r}
+  else{const g=wallLayout(N,k.L,k.W,k.uni);k.cols=g.np||1;k.perRow=Math.ceil(N/k.cols)}
+}
+const angOv=m=>m&&st.angOv?st.angOv[m.b+'|'+m.m]:0;
+function covCalc0(){
   const L=+st.cL||0,W=+st.cW||0,H=+st.cH||0,ear=+st.ear||1.2,ang=+st.cAng||90,n=st.n,h=H-ear;
   if(st.mount==='sobrepor'){if(!(L>0&&W>0))return {err:'Informe comprimento e largura do espaço.'};return covWall(L,W,H,ear,ang,n)}
   if(!(L>0&&W>0&&h>0))return {err:!(L>0&&W>0)?'Informe comprimento e largura do espaço.':'A altura do teto precisa ser maior que a altura do ouvinte.'};
   const half=ang/2*Math.PI/180,r=h*Math.tan(half),cr=CRIT[st.crit]||CRIT.eq,s=r*cr[2];
   const cols=Math.max(1,Math.ceil(L/s)),rows=Math.max(1,Math.ceil(W/s)),Nrec=cols*rows;
   const lay=layout(n,L,W,st.spc,+st.cabD||0);
-  const cs=Math.max(L,W)/110,nx=Math.ceil(L/cs),ny=Math.ceil(W/cs),G=new Float32Array(nx*ny),vals=[];
+  const cs=Math.max(L,W)/(st._rq||110),nx=Math.ceil(L/cs),ny=Math.ceil(W/cs),G=new Float32Array(nx*ny),vals=[];
   for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){const px=(i+.5)*cs,py=(j+.5)*cs;let e=0;
     for(const [sx,sy] of lay.P){const rr=Math.hypot(px-sx,py-sy),phi=Math.atan2(rr,h),d2=rr*rr+h*h,dir=Math.max(-24,-6*(phi/half)**2);e+=10**(dir/10)/d2}
-    const v=10*Math.log10(e);G[j*nx+i]=v;vals.push(v)}
+    const v=10*Math.log10(e);G[j*nx+i]=v;if(inA(px,py,L,W))vals.push(v)}
   const sorted=vals.slice().sort((a,b)=>a-b),mx=sorted[sorted.length-1],p5=sorted[Math.floor(sorted.length*.05)],p95=sorted[Math.floor(sorted.length*.95)];
   return {L,W,H,ear,ang,n,h,r,s,cr,cols,rows,Nrec,lay,G,nx,ny,cs,mx,spread:p95-p5,recDx:L/cols,recDy:W/rows};
 }
@@ -931,9 +951,9 @@ function covLines(k){
   const lv=k.spread<=3?'ótima':k.spread<=6?'boa para música ambiente':'irregular',sp=st.spc==='cabo'&&+st.cabD?`a ${fmt(+st.cabD)} m (distância do cabo)`:`a cerca de ${fmt(k.lay.dx)} × ${fmt(k.lay.dy)} m`;
   L.push({t:`Com ${k.n} alto-falante${k.n>1?'s':''} ${sp}: variação de ${fmt(k.spread)} dB no ambiente · cobertura ${lv}`,cls:k.spread>6?'warn':''});
   if(st.spc==='cabo'&&+st.cabD>k.s*1.02)L.push({t:`A distância de ${fmt(+st.cabD)} m entre alto-falantes passa do recomendado (${fmt(k.s)} m): aproxime para melhorar a cobertura.`,cls:'warn'});
-  if(k.n<k.Nrec)L.push({t:`Faltam ${k.Nrec-k.n} alto-falante${k.Nrec-k.n>1?'s':''} para a cobertura recomendada.`,cls:'warn'});
-  else if(k.n>k.Nrec*1.5)L.push({t:`${k.n} alto-falantes é mais do que o necessário: ${k.Nrec} já cobrem o espaço.`});
-  L.push({t:'Mapa relativo (0 dB = ponto mais forte), considerando todos com a mesma potência; paredes e móveis não entram no cálculo.'});
+  if(k.better&&k.n<k.Nrec)L.push({t:`Faltam ${k.Nrec-k.n} alto-falante${k.Nrec-k.n>1?'s':''} para a cobertura recomendada.`,cls:'warn'});
+  else if(!k.better&&k.spread<=k.tgt&&k.n>k.Nrec*1.5)L.push({t:`${k.n} alto-falantes é mais do que o necessário: ${k.Nrec} já cobrem o espaço.`});
+  L.push({t:'Mapa relativo (0 dB = ponto mais forte), considerando todos com a mesma potência; paredes e móveis não entram no cálculo. A variação é medida a partir de 0,5 m das paredes, onde as pessoas circulam.'});
   return L;
 }
 const uniq=a=>[...new Set(a.map(v=>Math.round(v*100)/100))].sort((p,q)=>p-q);
@@ -987,11 +1007,11 @@ function gabarito(k){
   return [{t:`Gabarito no comprimento (da parede esquerda para a direita): ${h}`,cls:'gab'},{t:`Gabarito na largura (da parede de cima para a de baixo): ${v}`,cls:'gab'}];
 }
 function renderCov(){
-  const ma=curModel();if(ma&&ma.ang)st.cAng=ma.ang;$('cAng').disabled=!!(ma&&ma.ang);
+  const ma=curModel();if(ma&&(ma.ang||angOv(ma)))st.cAng=ma.ang||angOv(ma);$('cAng').disabled=!!(ma&&ma.ang);
   const k=covCalc();
   ['cL','cW','cH'].forEach(i=>{if(document.activeElement!==$(i))$(i).value=st[i]||''});
   if(document.activeElement!==$('cAng'))$('cAng').value=st.cAng||'';
-  const m=curModel();$('angNote').textContent=m&&m.ang?`Definido pela ficha do ${m.b} ${m.m}.`:m?`A ficha do ${m.b} ${m.m} não informa o ângulo: digite o valor (típico entre 90° e 110°).`:'Digite o ângulo da ficha do alto-falante (arandelas costumam ter entre 90° e 110°).';
+  const m=curModel();$('angNote').textContent=m&&m.ang?`Definido pela ficha do ${m.b} ${m.m}.`:m&&angOv(m)?`A ficha do ${m.b} ${m.m} não informa o ângulo. Valor digitado por você, fica salvo para este modelo.`:m?`A ficha do ${m.b} ${m.m} não informa o ângulo: digite o valor (típico entre 90° e 110°).`:'Digite o ângulo da ficha do alto-falante (arandelas costumam ter entre 90° e 110°).';
   $('earChips').innerHTML=[['Sentado',1.2],['Em pé',1.7]].map(([l,v])=>`<button type="button" class="chip" data-ear="${v}" aria-pressed="${v===+st.ear}">${l} · ${fmt(v)} m</button>`).join('');
   $('critChips').innerHTML=Object.entries(CRIT).map(([key,v])=>`<button type="button" class="chip" data-crit="${key}" aria-pressed="${key===st.crit}">${v[0]}</button>`).join('');
   $('spcChips').innerHTML=`<button type="button" class="chip" data-spc="auto" aria-pressed="${st.spc!=='cabo'}">Distribuir no espaço</button><button type="button" class="chip" data-spc="cabo" aria-pressed="${st.spc==='cabo'}" ${+st.cabD?'':'disabled'}>Distância do cabo${+st.cabD?` (${fmt(+st.cabD)} m)`:''}</button>`;
@@ -1011,9 +1031,9 @@ function renderCov(){
 function covResHTML(k,ri){
   if(k.err)return `<p class="cname">${k.err}</p>`;
   {const tag=k.spread<=3?'<span class="tag ok">Cobertura ótima</span>':k.spread<=6?'<span class="tag high">Cobertura boa</span>':'<span class="tag low">Cobertura irregular</span>';
-    return `<div class="rhead"><div class="big">${k.Nrec}</div><div><b>${k.wall?'caixas recomendadas':'alto-falantes recomendados'}</b><br><span class="unit">${k.wall?`${k.cols} fileira${k.cols>1?'s':''} de ${k.perRow} · uma a cada ${fmt(k.rowS)} m`:`grade ${k.cols} × ${k.rows} · até ${fmt(k.s)} m entre eles`}</span></div></div>
+    return `<div class="rhead"><div class="big">${k.Nrec}</div><div><b>${k.wall?(k.Nrec>1?'caixas recomendadas':'caixa recomendada'):(k.Nrec>1?'alto-falantes recomendados':'alto-falante recomendado')}</b><br><span class="unit">${k.wall?`${rowTxt(k)} · uma a cada ${fmt(k.rowS)} m`:`grade ${k.cols} × ${k.rows} · até ${fmt(k.s)} m entre eles`}</span></div></div>
 <p class="calc" style="margin-top:8px">Hoje: ${k.n} alto-falante${k.n>1?'s':''} · variação de ${fmt(k.spread)} dB ${tag}</p>
-<div class="chips" style="margin-top:10px">${k.Nrec!==k.n?`<button type="button" class="chip" ${ri==null?'id="useN"':`data-usen="${ri}" data-v="${k.Nrec}"`}>Usar ${k.Nrec} ${ri==null?'na calculadora':`na sala ${ri+1}`}</button>`:''}${k.wall||ri!=null?'':`<button type="button" class="chip" id="useD">Distância do cabo: ${fmt(Math.max(k.recDx,k.recDy))} m</button>`}</div>`;}
+<div class="chips" style="margin-top:10px">${k.better?`<button type="button" class="chip" ${ri==null?'id="useN"':`data-usen="${ri}" data-v="${k.Nrec}"`}>Usar ${k.Nrec} ${ri==null?'na calculadora':`na sala ${ri+1}`} · variação de ${fmt(k.recSp)} dB</button>${k.recSp>k.tgt?'<span class="unit">Nenhuma quantidade chega ao objetivo neste espaço; esta é a de menor variação.</span>':''}`:k.spread<=k.tgt?'<span class="unit">A quantidade atual já atende o objetivo escolhido.</span>':''}${k.wall||ri!=null?'':`<button type="button" class="chip" id="useD">Distância do cabo: ${fmt(Math.max(k.recDx,k.recDy))} m</button>`}</div>${st.ampRev&&st.ampRevR===(ri==null?-1:ri)?arHTML():''}`;}
 }
 const roomK=r=>withSt({cL:r.L,cW:r.W,cH:r.H,n:r.n,cabD:roomCab(r).cabD},()=>covCalc());
 function renderCovRooms(){
@@ -1081,7 +1101,7 @@ function renderTrafo(){
   $('opts').innerHTML='';
 }
 const resHTML=c=>`<div class="rhead"><div class="big">${fmt(c.zt+cabR())} Ω</div><span class="tag ${c.st}">${TAG[c.st]}</span>${ampTag(c)}</div>${(g=>g?`<div class="caution"><b>⚠ Reduza o nível do amplificador</b>${gainTxt(g)}</div>`:'')(gainAdv(c))}<p class="cname">${mlabel()?`${mlabel()}: `:''}${c.name}</p><p class="calc">${c.calc}${cabR()?` · com o cabo: ${fmt(c.zt)} + ${fmt(cabR())} = ${fmt(c.zt+cabR())} Ω`:''}</p>${finalHTML(c)}${powerHTML(c)}`;
-function sugD(r){if(r.n<2)return 0;const k=withSt({cL:r.L,cW:r.W,cH:r.H,n:r.n,spc:'auto'},()=>covCalc());if(k.err)return 0;const P=k.lay.P;let t=0;for(let i=1;i<P.length;i++)t+=Math.hypot(P[i][0]-P[i-1][0],P[i][1]-P[i-1][1]);return Math.round(t/(P.length-1)*10)/10}
+function sugD(r){if(r.n<2||!(+r.L>0&&+r.W>0))return 0;const P=(st.mount==='sobrepor'?wallLayout(r.n,+r.L,+r.W,st.uni!==false):layout(r.n,+r.L,+r.W,'auto',0)).P;let t=0;for(let i=1;i<P.length;i++)t+=Math.hypot(P[i][0]-P[i-1][0],P[i][1]-P[i-1][1]);return Math.round(t/(P.length-1)*10)/10}
 const hasV=v=>v!==''&&v!=null;
 function roomCab(r){return {cabL:hasV(r.cabL)?r.cabL:st.cabL,cabD:hasV(r.cabD)?r.cabD:sugD(r)}}
 function roomPick(R){Object.assign(st,roomCab(R));st.n=R.n;st.sel=R.sel;const list=configs();if(!list.find(x=>x.id===st.sel))st.sel=list[0].id;R.sel=st.sel;return {list,c:list.find(x=>x.id===st.sel)}}
@@ -1121,6 +1141,9 @@ ${r.n>1?`<label class="unit">Distância entre os alto-falantes<div class="range"
   if(document.activeElement!==$('acMan'))$('acMan').value=st.acMan||2;
   $('acNote').textContent=on?'No modo salas cada sala já usa um canal do amplificador.':(()=>{const k=Math.min(acCh(),st.n),G=chGroups();return st.n<2?'Com 1 alto-falante só um canal é usado.':`${st.n} alto-falantes em ${k} ${k>1?'canais':'canal'}: ${G.map(x=>x.n).join(' + ')}.${acCh()>st.n?` Sobram ${acCh()-st.n} canais.`:''}${G.some(x=>x.n!==G[0].n)?' Os canais ficam com quantidades diferentes: o volume pode variar entre eles.':''}`})();
 }
+const arHTML=()=>st.ampRev?`<div class="caution"><b>⚠ Revise o amplificador</b>A quantidade de alto-falantes mudou pela cobertura sonora (${st.ampRev}). Confira se o amplificador ainda atende, ou escolha outro na sugestão.<div class="chips" style="margin-top:8px"><button type="button" class="chip pri" data-arv="go">Ver sugestão de amplificadores</button><button type="button" class="chip" data-arv="x">Dispensar</button></div></div>`:'';
+function arModal(){if(!st.ampRev)return;const d=document.createElement('div');d.className='mdl';d.setAttribute('role','dialog');d.setAttribute('aria-modal','true');d.innerHTML=arHTML().replace('data-arv="x">Dispensar','data-arv="ok">OK');d.onclick=e=>{const b=e.target.closest('[data-arv]');if(e.target===d||b)d.remove();if(b&&b.dataset.arv==='ok')e.stopPropagation()};document.body.appendChild(d);setTimeout(()=>{const b=d.querySelector('[data-arv="ok"]');b&&b.focus()},0)}
+function renderAr(){$('arImp').innerHTML=arHTML();$('arCov').innerHTML=arHTML()}
 function render(){
   const list=configs();
   if(!list.find(c=>c.id===st.sel))st.sel=list[0].id;
@@ -1148,7 +1171,7 @@ function render(){
   $('pgImp').hidden=st.page!=='imp';$('pgCov').hidden=st.page!=='cov';if(st.page==='cov')renderCov();
   renderAmp();renderModel();renderSug();$('aBl').innerHTML=brands().map(b=>`<option value="${b}">`).join('');
   if(st.trafo)renderTrafo();
-  renderMr();if((st.multi||acOn())&&st.page==='imp')renderRooms();
+  renderMr();if((st.multi||acOn())&&st.page==='imp')renderRooms();renderAr();
   if(st.multi||acOn()){$('resBox').hidden=!st.need||st.trafo}
   save();
 }
@@ -1164,8 +1187,10 @@ $('resTog').onclick=()=>{st.res=!st.res;if(st.sel)st.sel=st.res?st.sel.replace(/
 $('cabL').oninput=e=>{st.cabL=e.target.value;render()};
 $('cabD').oninput=e=>{st.cabD=e.target.value;render()};
 $('cabChips').onclick=e=>{const b=e.target.closest('[data-a]');if(b){st.cabA=+b.dataset.a;render()}};
+document.addEventListener('click',e=>{const b=e.target.closest('[data-arv]');if(!b)return;if(b.dataset.arv==='x'){st.ampRev=null;render();return}
+  st.page='imp';st.sugS=false;st.sugA=true;st.sugCol=false;render();setTimeout(()=>$('sugATog').scrollIntoView({block:'start',behavior:'smooth'}),50)});
 document.querySelector('.tabs').onclick=e=>{const b=e.target.closest('[data-pg]');if(b){st.page=b.dataset.pg;render();scrollTo({top:0})}};
-['cL','cW','cH','cAng'].forEach(i=>$(i).oninput=e=>{st[i]=e.target.value;render()});
+['cL','cW','cH','cAng'].forEach(i=>$(i).oninput=e=>{st[i]=e.target.value;if(i==='cAng'){const m=curModel();if(m&&!m.ang){st.angOv=st.angOv||{};const v=+e.target.value;if(v>=30&&v<=180)st.angOv[m.b+'|'+m.m]=v;else delete st.angOv[m.b+'|'+m.m]}}render()});
 $('earChips').onclick=e=>{const b=e.target.closest('[data-ear]');if(b){st.ear=+b.dataset.ear;render()}};
 $('critChips').onclick=e=>{const b=e.target.closest('[data-crit]');if(b){st.crit=b.dataset.crit;render()}};
 $('spcChips').onclick=e=>{const b=e.target.closest('[data-spc]');if(b&&!b.disabled){st.spc=b.dataset.spc;render()}};
@@ -1173,7 +1198,7 @@ $('mountChips').onclick=e=>{const b=e.target.closest('[data-mount]');if(b&&!b.di
 $('hs').oninput=e=>{st.hs=e.target.value;render()};
 $('uniTog').onclick=()=>{st.uni=st.uni===false;render()};
 $('cMinus').onclick=()=>setN(st.n-1);$('cPlus').onclick=()=>setN(st.n+1);
-$('covRes').onclick=e=>{const k=covCalc();if(k.err)return;if(e.target.id==='useN'){st.n=Math.min(32,k.Nrec);st.sel=null;render()}if(e.target.id==='useD'){st.cabD=Math.round(Math.max(k.recDx,k.recDy)*10)/10;render()}};
+$('covRes').onclick=e=>{const k=covCalc();if(k.err)return;if(e.target.id==='useN'){const o=st.n;st.n=Math.min(32,k.Nrec);st.sel=null;st.ampRev=`de ${o} para ${st.n}`;st.ampRevR=-1;render();arModal()}if(e.target.id==='useD'){st.cabD=Math.round(Math.max(k.recDx,k.recDy)*10)/10;render()}};
 const roc=new ResizeObserver(()=>{if(st.page==='cov')drawCov(covCalc())});roc.observe($('covFig'));
 $('sugAX').onclick=$('sugSX').onclick=()=>{st.sugCol=!st.sugCol;render()};
 $('mrTog').onclick=()=>{st.multi=!st.multi;if(st.multi){rooms();st.sugK=null}render()};
@@ -1189,16 +1214,16 @@ $('covRIn').oninput=e=>{const t=e.target.closest('[data-rf]');if(t){rooms()[+t.d
 $('roomsOut').onclick=e=>{const b=e.target.closest('[data-room]');if(b){groups()[+b.dataset.room].sel=b.dataset.id;render()}};
 $('acTog').onclick=()=>{st.allCh=!st.allCh;st.sugK=null;render()};
 $('acMan').oninput=e=>{st.acMan=e.target.value;render()};
-$('covRoomsOut').onclick=e=>{const b=e.target.closest('[data-usen]');if(b){const R=rooms();R[+b.dataset.usen].n=Math.min(32,+b.dataset.v);R[+b.dataset.usen].sel=null;$('rList').innerHTML='';$('covRIn').innerHTML='';$('cabRooms').innerHTML='';render()}};
+$('covRoomsOut').onclick=e=>{const b=e.target.closest('[data-usen]');if(b){const R=rooms(),i=+b.dataset.usen,o=R[i].n;R[i].n=Math.min(32,+b.dataset.v);st.ampRev=`sala ${i+1}: de ${o} para ${R[i].n}`;st.ampRevR=i;setTimeout(arModal,0);R[+b.dataset.usen].sel=null;$('rList').innerHTML='';$('covRIn').innerHTML='';$('cabRooms').innerHTML='';render()}};
 $('sugATog').onclick=()=>{st.sugA=!st.sugA;st.sugCol=false;if(!st.sugA&&st.sugK){st.n=st.sugK.total;st.sugK=null}if(st.sugA)st.sugS=false;render()};
 $('sugSTog').onclick=()=>{st.sugS=!st.sugS;st.sugCol=false;if(!st.sugS&&st.sugK){st.n=st.sugK.total;st.sugK=null}if(st.sugS)st.sugA=false;render()};
-$('sugA').onclick=e=>{if(e.target.closest('[data-open]')){st.sugCol=false;render();return}const b=e.target.closest('[data-amp]');if(!b)return;const [B,M]=decodeURIComponent(b.dataset.amp).split('|');st.useAmp=true;st.ampB=B;st.ampM=M;applyAmp();setK(+b.dataset.k);useSels(b.dataset.sel,+b.dataset.k);render()};
-$('sugS').onclick=e=>{if(e.target.closest('[data-open]')){st.sugCol=false;render();return}const t=e.target.closest('[data-tf]');if(t){st.sugT=t.dataset.tf;render();return}const b=e.target.closest('[data-spk]');if(!b)return;const [B,M]=decodeURIComponent(b.dataset.spk).split('|');st.useModel=true;st.brand=B;st.model=M;applyModel();setK(+b.dataset.k);st.sel=null;useSels(b.dataset.sel,+b.dataset.k);render()};
+$('sugA').onclick=e=>{if(e.target.closest('[data-open]')){st.sugCol=false;render();return}const b=e.target.closest('[data-amp]');if(!b)return;const t0=decodeURIComponent(b.dataset.amp),B=t0.slice(0,t0.indexOf('|')),M=t0.slice(t0.indexOf('|')+1);st.useAmp=true;st.ampB=B;st.ampM=M;st.ampRev=null;applyAmp();setK(+b.dataset.k);useSels(b.dataset.sel,+b.dataset.k);render()};
+$('sugS').onclick=e=>{if(e.target.closest('[data-open]')){st.sugCol=false;render();return}const t=e.target.closest('[data-tf]');if(t){st.sugT=t.dataset.tf;render();return}const b=e.target.closest('[data-spk]');if(!b)return;const t0=decodeURIComponent(b.dataset.spk),B=t0.slice(0,t0.indexOf('|')),M=t0.slice(t0.indexOf('|')+1);st.useModel=true;st.brand=B;st.model=M;applyModel();setK(+b.dataset.k);st.sel=null;useSels(b.dataset.sel,+b.dataset.k);render()};
 function useSels(t,k){const ids=(t||'').split(',').filter(Boolean);if(!ids.length||st.multi)return;if(st.allCh){const sz=dist(st.n,Math.max(1,Math.min(k,st.n)));st.CG=sz.map((n,i)=>({n,sel:ids[i]||null}))}else st.sel=ids[0]}
 function setK(k){st.sugCol=true;if(st.multi)return;if(st.allCh){st.sel=null;return}const N=sugN();st.sugK=k>1?{total:N,k}:null;st.n=N/k;st.sel=null}
 $('aTog').onclick=()=>{st.useAmp=!st.useAmp;if(st.useAmp)applyAmp();render()};
 $('ampB').onchange=e=>{st.ampB=e.target.value;st.ampM='';render()};
-$('ampM').onchange=e=>{st.ampM=e.target.value;applyAmp();render()};
+$('ampM').onchange=e=>{st.ampM=e.target.value;st.ampRev=null;applyAmp();render()};
 $('flexTog').onclick=()=>{st.flex=!st.flex;render()};
 $('aaSave').onclick=()=>{const b=$('aaB').value.trim(),m=$('aaM').value.trim(),p8=+$('aa8').value||0,p4=+$('aa4').value||0,p2=+$('aa2').value||0;
   if(!b||!m||!p8||!p4){$('aaMsg').textContent='Preencha marca, modelo e as potências em 8 e 4 Ω.';return}
