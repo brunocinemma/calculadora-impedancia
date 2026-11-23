@@ -255,7 +255,7 @@ li.caut{color:#8a6a00;font-weight:600}
 <div class="field"><span class="lbl">Altura do ouvinte</span><div class="chips" id="earChips"></div></div>
 <div class="field"><label for="cAng">Ângulo de cobertura do alto-falante</label><div class="range"><input type="number" id="cAng" min="30" max="180" step="5"><span class="unit">°</span></div><p class="unit" id="angNote" style="margin:6px 0 0"></p></div>
 <div class="field"><span class="lbl">Objetivo</span><div class="chips" id="critChips"></div></div>
-<div class="field sysField"><button type="button" class="sysBtn" id="sysBtn" style="margin-top:0">⚡ Montar sistema</button><p class="unit" style="margin:6px 0 0">Usa tudo o que está acima: medidas, tipo de caixa, layout, altura do ouvinte, ângulo, objetivo e a aplicação.</p>
+<div class="field sysField" style="margin-bottom:18px"><button type="button" class="sysBtn" id="sysBtn" style="margin-top:0">⚡ Montar sistema</button><p class="unit" style="margin:6px 0 0">Usa tudo o que está acima: medidas, tipo de caixa, layout, altura do ouvinte, ângulo, objetivo e a aplicação.</p>
 <div class="field" id="spcBox"><span class="lbl">Posicionamento</span><div class="chips" id="spcChips"></div></div>
 <div class="field" id="cNBox"><span class="lbl">Quantidade de alto-falantes</span><div class="step"><button type="button" id="cMinus" aria-label="Diminuir">−</button><b id="cN" style="min-width:48px;text-align:center;font-size:20px"></b><button type="button" id="cPlus" aria-label="Aumentar">+</button></div><p class="unit" style="margin:6px 0 0">É a mesma quantidade da aba Impedância.</p></div>
 </div><div class="result" id="covRes"></div></section>
@@ -613,7 +613,9 @@ const TAG={ok:'Dentro da faixa',low:'Abaixo do mínimo',high:'Acima da faixa'};
 const SPKDEFS=`<defs><linearGradient id="cone" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1a1d21"/><stop offset="1" stop-color="#3b424a"/></linearGradient>
 <g id="spk"><path d="M2 2h106l-8 13H10z" fill="var(--rim)" stroke="var(--mute)" stroke-width="1"/><path d="M14 15h82L74 44H36z" fill="url(#cone)"/>
 <rect x="12" y="57" width="86" height="6" rx="3" fill="#9aa3ad"/><rect x="24" y="44" width="62" height="36" rx="9" fill="var(--spk)" stroke="var(--mute)" stroke-width="1"/><rect x="24" y="44" width="62" height="7" rx="3" fill="#b8c0c8"/></g></defs>`;
+const BLANKBOX=h=>`<div style="height:${h}px;border-radius:12px;background:#d9d9d9;display:flex;align-items:center;justify-content:center;color:#6b6b6b;font-size:14px;text-align:center;padding:0 16px">Preencha os dados para ver o desenho</div>`;
 function draw(c){
+  if(st.blank){$('fig').innerHTML=BLANKBOX(220);return}
   const w=110,h=80,gapV=34,colGap=84,lm=56;
   const ps=c.k==='ps'||c.k==='s',nc=ps?c.p:c.s,nr=ps?c.s:c.p,top=ps&&nc>1?72:52;
   const colX=i=>lm+i*(w+colGap),rowY=r=>top+r*(h+gapV),ty=r=>rowY(r)+60;
@@ -745,8 +747,12 @@ const DB=[
  {b:'JBL',m:'Control 16C/T (embutir 6,5")',tipo:'embutir',ang:110,z:8,p:50,t70:[30,15,7.5,3.8],t100:[30,15,7.5],src:'jblpro.com · potência contínua (pink noise) no modo 8 Ω'},
  {b:'JBL',m:'Control 24CT (embutir 4")',tipo:'embutir',ang:130,z:0,p:40,t70:[30,15,7.5,3.7],t100:[30,15,7.5],src:'jbl.com · só linha 70/100 V'},
  {b:'JBL',m:'Control 26CT (embutir 6,5")',tipo:'embutir',ang:110,z:0,p:75,t70:[60,30,15,7.5],t100:[60,30,15],src:'jblpro.com · só linha 70/100 V'},
- {b:'Revel',m:'C263 (embutir 6,5")',tipo:'embutir',z:8,p:130,src:'ficha Revel · amplificação recomendada até 130 W; impedância nominal 8 Ω (confirmar)'},
+ {b:'Revel',m:'C363 (embutir 6,5")',tipo:'embutir',z:8,p:120,src:'harmanaudio.com · amplificação recomendada 10 a 120 W; 87 dB; impedância nominal 8 Ω (confirmar)'},
+ {b:'Revel',m:'C363XC (embutir 6,5", área externa/úmida)',tipo:'embutir',z:8,p:100,src:'harmanaudio.com · flush-mount Extreme Climate (IP65), 8 Ω nominal; amplificação recomendada 10 a 100 W; 85 dB'},
+ {b:'Revel',m:'C383 (embutir 8")',tipo:'embutir',z:8,p:125,src:'harmanaudio.com · amplificação recomendada 10 a 125 W; 87 dB; impedância nominal 8 Ω (confirmar)'},
+ {b:'Revel',m:'C383XC (embutir 8", área externa/úmida)',tipo:'embutir',z:8,p:100,src:'harmanaudio.com · flush-mount Extreme Climate (IP65), 8 Ω nominal; amplificação recomendada 10 a 100 W; 87 dB'},
  {b:'Revel',m:'C763 (embutir 6,5")',tipo:'embutir',z:8,p:140,src:'harmanaudio.com · amplificação recomendada até 140 W; impedância nominal 8 Ω (confirmar)'},
+ {b:'Revel',m:'C763L (embutir LCR, falantes angulados)',tipo:'embutir',z:8,p:200,src:'harmanaudio.com · caixa de teto LCR com falantes angulados para frente; amplificação recomendada 10 a 200 W; impedância nominal 8 Ω (confirmar)'},
  {b:'Revel',m:'C783 (embutir 8")',tipo:'embutir',z:8,p:150,src:'harmanaudio.com · amplificação recomendada até 150 W; impedância nominal 8 Ω (confirmar)'},
  {b:'Loud',m:"CLK6 120 BL Angulada (embutir 6\")",tipo:'embutir',z:8,p:120,src:'tabela Loud ago/2026'},
  {b:'Loud',m:"CSK6 120 BL (embutir 6\")",tipo:'embutir',z:8,p:120,src:'tabela Loud ago/2026'},
@@ -1020,7 +1026,7 @@ function covLines(k){
 }
 const uniq=a=>[...new Set(a.map(v=>Math.round(v*100)/100))].sort((p,q)=>p-q);
 const chain=(vals,total)=>{const pts=[0,...vals.filter(v=>v>0.005&&v<total-0.005),total];return pts.slice(1).map((v,i)=>[pts[i],v])};
-function drawCov(k){const box=$('covFig'),css=getComputedStyle(document.body);drawCovTo($('cv'),k,Math.max(300,box.clientWidth-16),Math.min(600,(box.clientWidth-16)*1.1),{ink:css.color,bg:css.backgroundColor,dpr:window.devicePixelRatio||1,gab:st.gab})}
+function drawCov(k){if(st.blank){const cv=$('cv'),w=Math.max(300,$('covFig').clientWidth-16),h=Math.round(w*0.6),d=window.devicePixelRatio||1;cv.width=w*d;cv.height=h*d;cv.style.width=w+'px';cv.style.height=h+'px';const x=cv.getContext('2d');x.setTransform(d,0,0,d,0,0);x.fillStyle='#d9d9d9';x.beginPath();x.roundRect?x.roundRect(0,0,w,h,12):x.rect(0,0,w,h);x.fill();x.fillStyle='#6b6b6b';x.font='14px system-ui,sans-serif';x.textAlign='center';x.fillText('Preencha os dados para ver o mapa',w/2,h/2);return}const box=$('covFig'),css=getComputedStyle(document.body);drawCovTo($('cv'),k,Math.max(300,box.clientWidth-16),Math.min(600,(box.clientWidth-16)*1.1),{ink:css.color,bg:css.backgroundColor,dpr:window.devicePixelRatio||1,gab:st.gab})}
 function drawCovTo(cv,k,cw,maxH,o){
   if(k.err){cv.width=cw;cv.height=120;cv.style.width=cw+'px';cv.style.height='120px';cv.getContext('2d').clearRect(0,0,cw,120);return}
   const mL=46,mT=o.gab?74:40,mR=o.gab?78:24,mB=k.wall?58:48,sc=Math.min((cw-mL-mR)/k.L,(Math.max(260,maxH)-mT-mB)/k.W),Wp=k.L*sc+mL+mR,Hp=k.W*sc+mT+mB,dpr=o.dpr;
@@ -1219,7 +1225,7 @@ function sysBuild(){
   if(RM.some(r=>!(r.L>0&&r.W>0&&r.H>0)))return {msg:'Preencha comprimento, largura e altura para montar o sistema.'};
   const Hm=Math.max(...RM.map(r=>r.H)),d=st.mount==='sobrepor'?Math.max(1,Math.max(...RM.map(r=>r.W))/2):Math.max(1,Hm-(+st.ear||1.2));
   const tgt=st.app==='leve'?85:98,need=Math.max(5,Math.pow(10,(tgt-87+20*Math.log10(d)-3)/10));
-  const C=allModels().filter(m=>m.tipo===st.mount&&m.z>0&&m.p>0&&!/jardim|garden|rock|outdoor/i.test(m.m)).sort((a,b)=>a.p-b.p||((b.ang?1:0)-(a.ang?1:0)));
+  const C=allModels().filter(m=>m.tipo===st.mount&&m.z>0&&m.p>0&&!/jardim|garden|rock|outdoor|externa|LCR/i.test(m.m)).sort((a,b)=>a.p-b.p||((b.ang?1:0)-(a.ang?1:0)));
   const ok=C.filter(m=>m.p>=need);if(!ok.length)return {msg:`Nenhuma caixa de ${st.mount} cadastrada chega aos ${fmt(need)} W estimados para este espaço.`};
   const pick=[],seen=new Set(),add=m=>{if(m&&!seen.has(m.b+'|'+m.m)&&!pick.some(x=>x.p===m.p)){pick.push(m);seen.add(m.b+'|'+m.m)}};
   add(ok[0]);add(ok.find(m=>m.p>=need*2)||ok[Math.floor(ok.length/2)]);add(ok.find(m=>m.p>=need*4)||ok[ok.length-1]);
@@ -1305,6 +1311,7 @@ $('audChips').onclick=e=>{const b=e.target.closest('[data-aud]');if(!b)return;st
 $('uniTog').onclick=()=>{st.uni=st.uni===false;render()};
 $('cMinus').onclick=()=>setN(st.n-1);$('cPlus').onclick=()=>setN(st.n+1);
 $('covRes').onclick=e=>{const k=covCalc();if(k.err)return;if(e.target.id==='useN'){const o=st.n;st.n=Math.min(32,k.Nrec);st.sel=null;st.ampRev=`de ${o} para ${st.n}`;st.ampRevR=-1;render();arModal()}if(e.target.id==='useD'){st.cabD=Math.round(Math.max(k.recDx,k.recDy)*10)/10;render()}};
+{const unb=e=>{if(!st.blank)return;const el=e.target;if(el.closest&&(el.closest('.mdl')||el.closest('.tabs')||el.closest('#rstBtn')))return;if(e.type==='click'&&!(el.closest&&el.closest('main button,main .chip')))return;st.blank=false;setTimeout(()=>{render();if(st.page==='cov')drawCov(covCalc())},0)};['input','change','click'].forEach(ev=>document.addEventListener(ev,unb,true))}
 const roc=new ResizeObserver(()=>{if(st.page==='cov')drawCov(covCalc())});roc.observe($('covFig'));
 $('sugAX').onclick=$('sugSX').onclick=()=>{st.sugCol=!st.sugCol;render()};
 $('mrTog').onclick=()=>{st.multi=!st.multi;if(st.multi){rooms();st.sugK=null}render()};
@@ -1338,7 +1345,7 @@ $('sysOut').onclick=e=>{const a=e.target.closest('[data-sapp]');if(a){st.app=a.d
   if(e.target.closest('[data-pgo]')){st.page='imp';render();scrollTo(0,0)}};
 $('rstBtn').onclick=()=>{const d=document.createElement('div');d.className='mdl';d.setAttribute('role','dialog');d.setAttribute('aria-modal','true');
   d.innerHTML=`<div class="caution" style="background:var(--box);color:var(--ink);border-color:var(--line)"><b>Resetar a calculadora?</b>Todos os campos voltam aos valores iniciais: caixas, amplificador, salas, cabo e cobertura. Os ângulos que você digitou para os modelos continuam salvos.<div class="chips" style="margin-top:12px"><button type="button" class="chip pri" data-rst="ok" style="background:var(--red);border-color:var(--red);color:#fff">Resetar</button><button type="button" class="chip" data-rst="x">Cancelar</button></div></div>`;
-  d.onclick=e=>{const b=e.target.closest('[data-rst]');if(!b&&e.target!==d)return;d.remove();if(b&&b.dataset.rst==='ok'){const keep=st.angOv;st=JSON.parse(JSON.stringify(DEF));if(keep)st.angOv=keep;SYS=null;$('sysOut').innerHTML='';try{$('rList').innerHTML=''}catch(_){}render();scrollTo(0,0)}};
+  d.onclick=e=>{const b=e.target.closest('[data-rst]');if(!b&&e.target!==d)return;d.remove();if(b&&b.dataset.rst==='ok'){const keep=st.angOv;st=JSON.parse(JSON.stringify(DEF));if(keep)st.angOv=keep;st.blank=true;SYS=null;$('sysOut').innerHTML='';try{$('rList').innerHTML=''}catch(_){}render();scrollTo(0,0)}};
   document.body.appendChild(d)};
 $('brTog').onclick=()=>{st.bridge=!st.bridge;applyAmp();render()};
 $('aaSave').onclick=()=>{const b=$('aaB').value.trim(),m=$('aaM').value.trim(),p8=+$('aa8').value||0,p4=+$('aa4').value||0,p2=+$('aa2').value||0;
