@@ -105,6 +105,13 @@ select{width:100%;height:46px;font:16px inherit;font-family:inherit;color:var(--
 .ov{position:fixed;inset:0;z-index:9;background:rgba(0,0,0,.75);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px;color:#fff;text-align:center}
 .ov img{max-width:100%;max-height:75vh;border-radius:8px;background:#fff}
 .ov[hidden]{display:none}
+.pw li.leveC{color:#8a6500}@media (prefers-color-scheme:dark){.pw li.leveC{color:#e6b84a}}
+.rstRow{display:flex;justify-content:flex-end;margin:-4px 0 4px}
+.sysBtn{margin-top:12px;width:100%;padding:13px;border-radius:12px;border:0;background:var(--blue);color:#fff;font:inherit;font-weight:700;font-size:16px;cursor:pointer}
+.sysBox{margin-top:12px;display:grid;gap:10px}.sysHead{font-size:14px;color:var(--mute);margin:0}
+.sysCard{border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--box)}
+.sysCard h4{margin:0 0 6px;font-size:15px;display:flex;justify-content:space-between;gap:8px;align-items:center}
+.sysCard p{margin:3px 0;font-size:14px}.sysCard .sysUse{margin-top:8px;width:100%;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:inherit;font-weight:600;cursor:pointer}
 .caution .chip{background:#fff;color:#4a3800;border:1px solid #c99a00}.caution .chip.pri{background:#4a3800;color:#fff;border-color:#4a3800}
 .mdl{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:999;padding:20px}.mdl .caution{max-width:420px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,.4);font-size:15px;margin:0}.mdl .caution b{font-size:18px}
 .caution{background:#fff3c4;border:2px solid #e0b400;color:#4a3800;border-radius:10px;padding:10px 12px;margin:10px 0;font-size:14px;line-height:1.45}.caution b{display:block;font-size:15px;margin-bottom:4px}
@@ -147,6 +154,7 @@ li.caut{color:#8a6a00;font-weight:600}
 <div class="app">
 <section>
 <div class="panel">
+<div class="rstRow"><button type="button" class="chip" id="rstBtn">↺ Resetar</button></div>
 <div class="field"><span class="lbl">Caixas</span>
 <button type="button" class="tog" id="mTog" role="switch" aria-checked="false"><span class="sw"></span><span>Usar marca/modelo</span></button>
 <div id="arImp"></div>
@@ -200,6 +208,7 @@ li.caut{color:#8a6a00;font-weight:600}
 <div class="dims" id="pchDims"><label>em 8 Ω<input type="number" id="pch" min="0" step="10" placeholder="W" inputmode="decimal"></label><label>em 4 Ω<input type="number" id="pch4" min="0" step="10" placeholder="W" inputmode="decimal"></label><label>em 2 Ω<input type="number" id="pch2" min="0" step="10" placeholder="W" inputmode="decimal"></label></div>
 <button type="button" class="tog" id="flexTog" role="switch" aria-checked="false" style="margin-top:8px"><span class="sw"></span><span>Mesma potência em 8, 4 e 2 Ω (flex)</span></button>
 <p class="unit" id="pchNote" style="margin:6px 0 0">Valores da ficha do amplificador, em watts por canal. 4 Ω e 2 Ω são opcionais.</p></div>
+<div class="field"><span class="lbl">Aplicação</span><div class="chips" id="appChips"><button type="button" class="chip" data-app="musical">Musical</button><button type="button" class="chip" data-app="leve">Sonorização leve</button></div><p class="unit" id="appNote" style="margin:6px 0 0"></p></div>
 <div class="field"><span class="lbl">Cabo</span>
 <div id="cabOne"><label for="cabL" class="lbl" style="font-weight:500">Distância do amplificador até o primeiro alto-falante</label>
 <div class="range"><input type="number" id="cabL" min="0" step="0.5" placeholder="m" style="width:110px"><span class="unit">m</span></div>
@@ -239,11 +248,14 @@ li.caut{color:#8a6a00;font-weight:600}
 <div class="dims" id="cDims"><label>Comprimento<input type="number" id="cL" min="0" step="0.5" inputmode="decimal"></label><label>Largura<input type="number" id="cW" min="0" step="0.5" inputmode="decimal"></label><label>Altura<input type="number" id="cH" min="0" step="0.1" inputmode="decimal"></label></div>
 <p class="unit" style="margin:6px 0 0">Medidas em metros; altura = do piso ao teto.</p></div>
 <div class="field"><span class="lbl">Tipo de caixa</span><div class="chips" id="mountChips"></div><p class="unit" id="mountNote" style="margin:6px 0 0"></p></div>
+<div class="field"><span class="lbl">Layout da sala</span><div class="chips" id="audChips"><button type="button" class="chip" data-aud="0">Comum</button><button type="button" class="chip" data-aud="1">Auditório</button></div><p class="unit" id="audNote" style="margin:6px 0 0"></p></div>
 <div id="wallBox" class="field"><label for="hs">Altura da caixa na parede</label><div class="range"><input type="number" id="hs" min="0.5" step="0.1" inputmode="decimal"><span class="unit">m do piso</span></div>
 <button type="button" class="tog" id="uniTog" role="switch" aria-checked="true" style="margin-top:10px"><span class="sw"></span><span>Orientação única</span></button><p class="unit" id="uniNote" style="margin:6px 0 0"></p></div>
+<div id="sysOut"></div></div>
 <div class="field"><span class="lbl">Altura do ouvinte</span><div class="chips" id="earChips"></div></div>
 <div class="field"><label for="cAng">Ângulo de cobertura do alto-falante</label><div class="range"><input type="number" id="cAng" min="30" max="180" step="5"><span class="unit">°</span></div><p class="unit" id="angNote" style="margin:6px 0 0"></p></div>
 <div class="field"><span class="lbl">Objetivo</span><div class="chips" id="critChips"></div></div>
+<div class="field sysField"><button type="button" class="sysBtn" id="sysBtn" style="margin-top:0">⚡ Montar sistema</button><p class="unit" style="margin:6px 0 0">Usa tudo o que está acima: medidas, tipo de caixa, layout, altura do ouvinte, ângulo, objetivo e a aplicação.</p>
 <div class="field" id="spcBox"><span class="lbl">Posicionamento</span><div class="chips" id="spcChips"></div></div>
 <div class="field" id="cNBox"><span class="lbl">Quantidade de alto-falantes</span><div class="step"><button type="button" id="cMinus" aria-label="Diminuir">−</button><b id="cN" style="min-width:48px;text-align:center;font-size:20px"></b><button type="button" id="cPlus" aria-label="Aumentar">+</button></div><p class="unit" style="margin:6px 0 0">É a mesma quantidade da aba Impedância.</p></div>
 </div><div class="result" id="covRes"></div></section>
@@ -261,6 +273,7 @@ li.caut{color:#8a6a00;font-weight:600}
 const $=id=>document.getElementById(id);
 const ZS=[2,4,6,8,16];
 let st={useAmp:false,ampB:'',ampM:'',flex:false,pch4:'',pch2:'',mount:'embutir',hs:2.2,uni:true,gab:true,page:'imp',cL:8,cW:4,cH:2.8,ear:1.2,cAng:90,crit:'eq',spc:'auto',useModel:false,brand:'JBL',model:'',n:4,z:8,min:4,max:8,pspk:50,pch:100,res:true,cabL:20,cabD:2.5,cabA:1.5,trafo:false,vline:70,tap:10,sel:null},cur=null;
+const DEF=JSON.parse(JSON.stringify(st));
 try{const s=JSON.parse(localStorage.getItem('imp-calc2')||'null');if(s)st={...st,...s}}catch(e){}
 if(st.res===undefined)st.res=true;if(st.gab===undefined)st.gab=true;if(st.mount===undefined){st.mount='embutir';st.hs=2.2;st.uni=true}if(st.cL===undefined){st.page='imp';st.cL=8;st.cW=4;st.cH=2.8;st.ear=1.2;st.cAng=90;st.crit='eq';st.spc='auto'}if(st.vline===undefined){st.trafo=false;st.vline=70;st.tap=10}if(st.cabA===undefined){st.cabL=20;st.cabD=2.5;st.cabA=1.5}if(st.pspk===undefined)st.pspk=50;if(st.pch===undefined)st.pch=100;
 const save=()=>{try{localStorage.setItem('imp-calc2',JSON.stringify(st))}catch(e){}};
@@ -329,8 +342,10 @@ function split(av,ch,N,z,pk,mn,mx,fk){let best=null;
   return best}
 const kTxt=x=>x.k>1?(x.sizes&&x.sizes.some(v=>v!==x.sizes[0])?`${x.k} canais (${x.sizes.join(' + ')} caixas) · `:`${x.k} canais com ${x.n} caixa${x.n>1?'s':''} cada · `):'';
 const sugN=()=>st.sugK?st.sugK.total:st.n;
-const rTag=r=>r>=1.5&&r<=2.05?['ok','ideal']:r<1.5?['mid','pouca folga']:['high','acima'];
-const rScore=r=>r>=1.5&&r<=2.05?Math.abs(r-1.75)*.1:1+(r<1.5?(1.5-r)*2:(r-2.05));
+const APPS={musical:{nm:'Musical',lo:1.5,hi:2.05,c:1.75,low:1,txt:'1,5 a 2×'},leve:{nm:'Sonorização leve',lo:.6,hi:2.05,c:.9,low:.5,txt:'0,6 a 2×'}};
+const AP=()=>APPS[st.app]||APPS.musical;
+const rTag=r=>{const A=AP();return r>=A.lo&&r<=A.hi?['ok',st.app==='leve'?'adequado':'ideal']:r<A.lo?['mid','pouca folga']:['high','acima']};
+const rScore=r=>{const A=AP();return r>=A.lo&&r<=A.hi?Math.abs(r-A.c)*.1:1+(r<A.lo?(A.lo-r)*2:(r-A.hi))};
 const divs=n=>{const o=[];for(let k=1;k<=n;k++)if(n%k===0)o.push(k);return o};
 // distribui canais sobrando para as salas que precisam (so divisoes exatas, para cada canal ficar igual)
 function mrEval(av,z,pk,mn,mx,C){const R=rooms(),nr=R.length,ev=(r,k)=>withSt(roomCab(r),()=>split(av,1,r.n/k,z,pk,mn,mx));
@@ -353,7 +368,7 @@ function sugAmpsMr(){
   ampPool().forEach(a=>{if((!a.p8&&!a.p4)||chOf(a)<nr)return;const e=mrEval(avOf(a),st.z,pk,a.p2?2:(a.p4===0?8:4),8,chOf(a));if(!e)return;
     L.push({a,sc:e.sc,r:e.r,sub:`${chOf(a)} canais${e.used>nr?` (usa ${e.used})`:''} · ${mrSub(e.xs)}`,tag:rTag(e.r)})});
   L.sort((x,y)=>x.sc-y.sc||powT(x.a)-powT(y.a));
-  return L.length?{L:L.slice(0,8),head:`Multicanais para ${nr} salas (ideal: 1,5 a 2× em cada sala; canais que sobram reforçam as salas maiores):`}:{msg:`Nenhum multicanal cadastrado com ${nr} canais atende todas as salas com folga.`}}
+  return L.length?{L:L.slice(0,8),head:`Multicanais para ${nr} salas (${st.app==='leve'?'sonorização leve':'ideal'}: ${AP().txt} em cada sala; canais que sobram reforçam as salas maiores):`}:{msg:`Nenhum multicanal cadastrado com ${nr} canais atende todas as salas com folga.`}}
 function sugSpkMr(){
   const av=ampVals(),f=st.sugT||'todos',ok=m=>f==='todos'||m.tipo===f,L=[],R=rooms();
   if(st.trafo){const pc=curAmp()?(curAmp().v70||0):(+st.pch||0);if(!pc)return {msg:'Escolha um amplificador de linha ou informe a potência do canal.'};const nm=Math.max(...R.map(r=>r.n));
@@ -375,7 +390,7 @@ function sugAmps(){
   ampPool().forEach(a=>{if(!a.p8&&!a.p4)return;const x=split(avOf(a),chOf(a),N,st.z,pk,a.p2?2:(a.p4===0?8:4),8,st.allCh?chOf(a):0);if(!x)return;
     L.push({a,...x,sub:`${kTxt(x)}${x.c.name} · ${fmt(x.Z)} Ω · ${fmt(x.q.p)} W no canal${x.q.est?' (est.)':''} = ${fmt(x.r)}×`,tag:rTag(x.r)})});
   L.sort((x,y)=>x.sc-y.sc||powT(x.a)-powT(y.a));
-  return L.length?{L:L.slice(0,8),head:`Para ${N} × ${fmt(st.z)} Ω de ${fmt(pk)} W (ideal: 1,5 a 2× a soma por canal):`}:{msg:'Nenhum amplificador cadastrado atende esta ligação com folga.'}}
+  return L.length?{L:L.slice(0,8),head:`Para ${N} × ${fmt(st.z)} Ω de ${fmt(pk)} W (${st.app==='leve'?'sonorização leve':'ideal'}: ${AP().txt} a soma por canal):`}:{msg:'Nenhum amplificador cadastrado atende esta ligação com folga.'}}
 function sugSpk(){
   if(st.multi)return sugSpkMr();
   const av=ampVals(),f=st.sugT||'todos',ok=m=>f==='todos'||m.tipo===f,L=[];
@@ -388,7 +403,7 @@ function sugSpk(){
   allModels().filter(ok).forEach(m=>{if(!m.z||!m.p)return;const x=split(av,st.allCh?acCh():ch,N,m.z,m.p,st.min,st.max,st.allCh?acCh():0);if(!x)return;
     L.push({m,...x,sub:`${kTxt(x)}${fmt(m.z)} Ω · ${fmt(m.p)} W · ${m.tipo||''} · ${fmt(x.q.p/x.c.slots)} W para cada = ${fmt(x.r)}×`,tag:rTag(x.r)})});
   L.sort((x,y)=>x.sc-y.sc||y.m.p-x.m.p);
-  return L.length?{L:L.slice(0,8),head:`Para ${N} alto-falantes${ch>1?` em até ${ch} canais`:''} neste amplificador (ideal: 1,5 a 2× a soma):`}:{msg:'Nenhum modelo cadastrado fica ideal com este amplificador e esta quantidade.'}}
+  return L.length?{L:L.slice(0,8),head:`Para ${N} alto-falantes${ch>1?` em até ${ch} canais`:''} neste amplificador (${st.app==='leve'?'sonorização leve':'ideal'}: ${AP().txt} a soma):`}:{msg:'Nenhum modelo cadastrado fica ideal com este amplificador e esta quantidade.'}}
 function renderSug(){CFGC.clear();
   $('sugATog').setAttribute('aria-checked',!!st.sugA);$('sugSTog').setAttribute('aria-checked',!!st.sugS);
   $('sugATog').disabled=!!st.sugS;$('sugSTog').disabled=!!st.sugA;
@@ -416,6 +431,13 @@ function ampLines(c){
   else if(q.under)L.push({t:`A ligação fica abaixo de 4 Ω: confira na ficha se o amplificador aceita ${fmt(Z)} Ω por canal.`,cls:'warn'});
   if(!pk)return L;
   const tot=pk*c.slots,ratio=q.p/tot,a=tot*1.5,b=tot*2,rg=`entre ${fmt(a)} e ${fmt(b)} W nessa impedância`;
+  if(st.app==='leve'){const A=AP(),rl=`a partir de ${fmt(tot*A.lo)} W nessa impedância`;
+    if(ratio<A.low)L.push({t:`Amplificador insuficiente mesmo para sonorização leve: ${fmt(q.p)} W para ${c.slots} × ${fmt(pk)} W = ${fmt(tot)} W${c.r?' (contando o resistor)':''}. Use um canal ${rl}.`,cls:'warn',amp:'low'});
+    else if(ratio<A.lo)L.push({t:`Pouca folga mesmo para sonorização leve (${fmt(ratio)}× a soma dos alto-falantes). O recomendado é um canal ${rl}.`,amp:'mid'});
+    else if(ratio<=A.hi){L.push({t:`Adequado para sonorização leve: ${fmt(ratio)}× a soma dos alto-falantes (${fmt(tot)} W). Em volume ambiente o canal trabalha longe do limite.`,cls:'ok',amp:'ok'});
+      if(ratio<1)L.push({t:`O canal tem menos potência que a soma das caixas: mantenha o volume ambiente. Se alguém tocar alto, o amplificador chega ao limite e distorce (clipping), o que pode queimar os tweeters. Para música alta, use a aplicação Musical.`,cls:'leveC'})}
+    else{L.push({t:`Amplificador bem acima (${fmt(ratio)}× a soma dos alto-falantes): no volume máximo cada alto-falante passaria dos ${fmt(pk)} W.`,cls:'warn',amp:'high'});const g=gainAdv(c);if(g)L.push({t:gainTxt(g),cls:'caut'})}
+    return L}
   if(ratio<1)L.push({t:`Amplificador insuficiente: ${fmt(q.p)} W para ${c.slots} × ${fmt(pk)} W = ${fmt(tot)} W${c.r?' (contando o resistor)':''}. Em volume alto ele distorce (clipping), o que pode queimar os tweeters. O ideal é um canal ${rg}.`,cls:'warn',amp:'low'});
   else if(ratio<1.5)L.push({t:`O amplificador atende, mas com pouca folga (${fmt(ratio)}× a potência dos alto-falantes). O ideal é um canal ${rg}.`,amp:'mid'});
   else if(ratio<=2.05)L.push({t:`Potência ideal: ${fmt(ratio)}× a soma dos alto-falantes (${fmt(tot)} W), com folga para não distorcer.`,cls:'ok',amp:'ok'});
@@ -504,6 +526,7 @@ const AMPS=[
  {b:'Next Pro',m:'R10Q (4 canais)',ch:'4 canais',p8:650,p4:1400,p2:2450,br:{p8:2800,p4:4900,est4:1},note:'Série Pro-R, 9 dB CF; mínimo 2 Ω; bridge 2 × 2800 W em 8 Ω'},
  {b:'Next Pro',m:'R15 (2 canais)',ch:'2 canais',p8:3000,p4:5000,p2:8000,note:'Série Pro-R, 9 dB CF; mínimo 2 Ω; sem bridge; dados preliminares'},
  {b:'Next Pro',m:'R15Q (4 canais)',ch:'4 canais',p8:1200,p4:2000,p2:3750,br:{p8:4000,p4:7500,est4:1},note:'Série Pro-R, 9 dB CF; mínimo 2 Ω; bridge 2 × 4000 W em 8 Ω; dados preliminares'},
+ {b:'Lexicon',m:'DD-8+ (8 canais)',ch:'8 canais',p8:125,p4:125,p2:0,note:'multiroom em rede: 125 W RMS por canal em 8 Ω, todos os canais ligados; em 4 Ω também 125 W (suporte Harman); mínimo 4 Ω; matriz 10 × 8, DSP com EQ paramétrico de 10 bandas, limitador e delay por canal; o fabricante não informa bridge'},
  {b:'JBL',m:'DEE 4.1 (1 canal)',ch:'1 canal',p8:40,p4:80,p2:120,note:'sonorização ambiente com mixer, Bluetooth, USB, FM e DSP com presets JBL; aceita caixas de 4 a 8 Ω, mínimo 2 Ω por canal; 120 W em 2 Ω (JBL), 80 W em 4 Ω (revenda Audioprime) e 40 W em 8 Ω calculado pela tensão de 4 Ω'},
  {b:'JBL',m:'DEE 8.2 (2 canais)',ch:'2 canais',p8:40,p4:80,p2:120,note:'sonorização ambiente com mixer, Bluetooth, USB, FM e DSP com presets JBL; aceita caixas de 4 a 8 Ω, mínimo 2 Ω por canal; 120 W em 2 Ω (JBL), 80 W em 4 Ω (revenda Audioprime) e 40 W em 8 Ω calculado pela tensão de 4 Ω'},
  {b:'JBL',m:'DEE 16.4 (4 canais)',ch:'4 canais',p8:40,p4:80,p2:120,note:'sonorização ambiente com mixer, Bluetooth, USB, FM e DSP com presets JBL; aceita caixas de 4 a 8 Ω, mínimo 2 Ω por canal; 120 W em 2 Ω (JBL), 80 W em 4 Ω (revenda Audioprime) e 40 W em 8 Ω calculado pela tensão de 4 Ω'},
@@ -690,7 +713,7 @@ function cableLines(c){
 }
 function finalHTML(c){const k=cable(c),pc=pcOf(c);if(!k||!pc)return '';
   return `<p class="final">No final: <b>${fmt(pc-pc*k.loss)} W</b> chegam aos alto-falantes e ${fmt(pc*k.loss)} W se perdem no cabo</p>`}
-function ampTag(c){if(c.m)return '';const a=(ampLines(c).find(l=>l.amp)||{}).amp;return a==='low'?'<span class="tag low">Amplificador insuficiente</span>':a==='ok'?'<span class="tag ok">Amplificador ideal</span>':a==='mid'?'<span class="tag high">Amplificador com pouca folga</span>':a==='high'?'<span class="tag high">Amplificador acima</span>':''}
+function ampTag(c){if(c.m)return '';const a=(ampLines(c).find(l=>l.amp)||{}).amp;return a==='low'?'<span class="tag low">Amplificador insuficiente</span>':a==='ok'?`<span class="tag ok">${st.app==='leve'?'Amplificador adequado (leve)':'Amplificador ideal'}</span>`:a==='mid'?'<span class="tag high">Amplificador com pouca folga</span>':a==='high'?'<span class="tag high">Amplificador acima</span>':''}
 function powerHTML(c){const L=powerLines(c).concat(cableLines(c)).filter(l=>l.cls!=='caut');return L.length?`<ul class="pw">${L.map(l=>`<li class="${l.cls||''}">${l.t}</li>`).join('')}</ul>`:''}
 const DB=[
  {b:'JBL',m:'6CO1Q (embutir 6")',tipo:'embutir',z:8,p:25,src:'jblpro.com (pt-BR)'},
@@ -885,7 +908,8 @@ const CRIT={musica:['Música ambiente','borda a borda',2],eq:['Equilibrado','sob
 function cgrid(n,L,W){let best=null;for(let c=1;c<=n;c++){const r=Math.ceil(n/c),sc=Math.abs(Math.log((L/c)/(W/r)))+(c*r-n)*0.5;if(!best||sc<best.sc)best={c,r,sc}}return best}
 function layout(n,L,W,mode,s){
   const g=cgrid(n,L,W),P=[];let dx,dy,x0,y0;
-  if(mode==='cabo'&&s>0){dx=dy=s;x0=(L-(g.c-1)*s)/2;y0=(W-(g.r-1)*s)/2}else{dx=L/g.c;dy=W/g.r;x0=dx/2;y0=dy/2}
+  if(mode==='cabo'&&s>0){dx=dy=s;x0=(L-(g.c-1)*s)/2;y0=(W-(g.r-1)*s)/2}else{dx=L/g.c;dy=W/g.r;x0=dx/2;y0=dy/2;if(st.aud){dx=L/(g.c+1);x0=dx}}
+  if(mode==='cabo'&&s>0&&st.aud)x0=s;
   for(let i=0;i<n;i++){const row=Math.floor(i/g.c),col=i%g.c,k=row===g.r-1?n-g.c*(g.r-1):g.c,off=(g.c-k)*dx/2;P.push([x0+off+col*dx,y0+row*dy])}
   return {P,c:g.c,r:g.r,dx,dy};
 }
@@ -894,10 +918,9 @@ function wallLayout(n,L,W,uni){
   const P=[],A=[],nrm=(x,y)=>{const d=Math.hypot(x,y);return [x/d,y/d]};
   if(uni){const np=Math.ceil(n/2);let i=0;
     for(let j=0;j<np;j++){const cnt=Math.min(2,n-i);
-      if(j===0){(cnt===2?[W/4,3*W/4]:[W/2]).forEach(y=>{P.push([0,y]);A.push([1,0])})}
-      else{const x=L*j/np;(cnt===2?[0,W]:[0]).forEach(y=>{P.push([x,y]);A.push(nrm(1,y===0?0.35:-0.35))})}
+      const x=st.aud?L*(j+1)/(np+1):L*j/np;(cnt===2?[0,W]:[0]).forEach(y=>{P.push([x,y]);A.push(nrm(1,y===0?0.35:-0.35))});
       i+=cnt}
-    return {P,A,dx:L/np,dy:W/2,np}}
+    return {P,A,dx:st.aud?L/(np+1):L/np,dy:W/2,np}}
   const a=Math.ceil(n/2),b=n-a;
   for(let i=0;i<a;i++){P.push([0,(i+.5)*W/a]);A.push([1,0])}
   for(let i=0;i<b;i++){P.push([L,(i+.5)*W/b]);A.push([-1,0])}
@@ -906,11 +929,11 @@ function wallLayout(n,L,W,uni){
 function covWall(L,W,H,ear,ang,n){
   const hs=+st.hs||2.2,half=ang/2*Math.PI/180,rowS=ROWS[st.crit]||6,cr=CRIT[st.crit]||CRIT.eq,uni=st.uni!==false;
   const wid=2*rowS*Math.tan(Math.min(half,1.4)),perRow=Math.max(W>3?2:1,Math.ceil(W/wid)),rows=Math.max(1,Math.ceil(L/rowS)),Nrec=perRow*rows;
-  const lay=wallLayout(n,L,W,uni);
+  const lay=wallLayout(n,L,W,uni),xc=audCut(lay,1);
   const cs=Math.max(L,W)/(st._rq||110),nx=Math.ceil(L/cs),ny=Math.ceil(W/cs),G=new Float32Array(nx*ny),vals=[];
   for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){const px=(i+.5)*cs,py=(j+.5)*cs;let e=0;
     lay.P.forEach(([sx,sy],q)=>{const [ax,ay]=lay.A[q],vx=px-sx,vy=py-sy,vz=ear-hs,d=Math.hypot(vx,vy,vz),c=(ax*vx+ay*vy)/d,phi=Math.acos(Math.max(-1,Math.min(1,c))),dir=c<=0?-24:Math.max(-24,-6*(phi/half)**2);e+=10**(dir/10)/Math.max(d*d,0.25)});
-    const v=10*Math.log10(e);G[j*nx+i]=v;if(inA(px,py,L,W))vals.push(v)}
+    const v=10*Math.log10(e);G[j*nx+i]=v;if(inA(px,py,L,W,xc))vals.push(v)}
   const sorted=vals.slice().sort((a,b)=>a-b),mx=sorted[sorted.length-1],p5=sorted[Math.floor(sorted.length*.05)],p95=sorted[Math.floor(sorted.length*.95)];
   return {wall:1,uni,hs,half,rowS,perRow,L,W,H,ear,ang,n,h:H-ear,r:0,s:rowS,cr,cols:rows,rows:perRow,Nrec,lay,G,nx,ny,cs,mx,spread:p95-p5,recDx:L/rows,recDy:W/perRow};
 }
@@ -920,25 +943,26 @@ function wallLines(k){
   if(!k.uni)L.push({t:'Caixas apontadas uma para a outra: o som se cruza no centro e pode causar cancelamentos e eco. Prefira a orientação única.',cls:'warn'});
   L.push({t:`Com ${fmt(k.ang)}° de cobertura, para ${k.cr[0].toLowerCase()} use uma fileira de caixas a cada ${fmt(k.rowS)} m de profundidade`});
   L.push({t:`Para ${fmt(k.L)} × ${fmt(k.W)} m: ${k.Nrec} caixa${k.Nrec>1?'s':''} (${rowTxt(k)})`,cls:'res'});
-  const lv=k.spread<=3?'ótima':k.spread<=6?'boa para música ambiente':'irregular';
-  L.push({t:`Com ${k.n} caixa${k.n>1?'s':''}: variação de ${fmt(k.spread)} dB no ambiente · cobertura ${lv}`,cls:k.spread>6?'warn':''});
+  const lv=k.spread<=(k.tgt||6)*.5?'ótima':k.spread<=(k.tgt||6)?'boa':'irregular';
+  L.push({t:`Com ${k.n} caixa${k.n>1?'s':''}: variação de ${fmt(k.spread)} dB no ambiente · cobertura ${lv}`,cls:k.spread>(k.tgt||6)?'warn':''});
   if(k.better&&k.n<k.Nrec)L.push({t:`Faltam ${k.Nrec-k.n} caixa${k.Nrec-k.n>1?'s':''} para a cobertura recomendada.`,cls:'warn'});
-  if(k.uni&&k.lay.np>1)L.push({t:`Nas fileiras de reforço, ajuste no processador ou amplificador um atraso (delay) de cerca de 2,9 ms por metro de distância da primeira fileira: ${fmt(k.lay.dx)} m ≈ ${fmt(k.lay.dx*2.9)} ms.`});
+  L.push(...delayLines(k));
   L.push({t:'Mapa relativo (0 dB = ponto mais forte), considerando todas com a mesma potência; paredes e móveis não entram no cálculo. A variação é medida a partir de 0,5 m das paredes, onde as pessoas circulam.'});
   return L;
 }
-const RECT={musica:6,eq:4.5,voz:3},RC=new Map();
+const RECT={musica:9,eq:6.5,voz:4.5},RC=new Map();
 const rowTxt=k=>{const sz=dist(k.Nrec,k.cols);return k.cols===1?`1 fileira de ${k.Nrec}`:sz.every(v=>v===sz[0])?`${k.cols} fileiras de ${sz[0]}`:`${k.cols} fileiras: ${sz.join(' + ')}`};
-const EDGE=0.5,inA=(x,y,L,W)=>Math.min(L,W)<=2.5||(x>=EDGE&&x<=L-EDGE&&y>=EDGE&&y<=W-EDGE);
+const EDGE=0.5,inA=(x,y,L,W,x0)=>Math.min(L,W)<=2.5||(x>=Math.max(EDGE,x0||0)&&x<=L-EDGE&&y>=EDGE&&y<=W-EDGE);
+const audCut=(lay,wall)=>{if(!st.aud)return 0;const L=Math.max(...lay.P.map(p=>p[0]))+Math.min(...lay.P.map(p=>p[0]));const x1=Math.min(...lay.P.map(p=>p[0]));return wall?Math.min(x1,L*.3):Math.min(lay.sRef*.6,L*.3,x1)};
 function covCalc(){const k=covCalc0();if(!k.err)applyRec(k);return k}
 function applyRec(k){
-  const tgt=RECT[st.crit]||4.5,key=[k.wall?1:0,k.L,k.W,k.H,k.ear,k.ang,st.crit,st.spc,+st.cabD||0,st.mount,st.hs,st.uni].join('|');
+  const tgt=RECT[st.crit]||4.5,key=[st.aud?1:0,k.wall?1:0,k.L,k.W,k.H,k.ear,k.ang,st.crit,st.spc,+st.cabD||0,st.mount,st.hs,st.uni].join('|');
   let sp=RC.get(key);if(!sp){sp=[];RC.set(key,sp);if(RC.size>60)RC.delete(RC.keys().next().value)}
   const g=i=>sp[i]!=null?sp[i]:(sp[i]=withSt({n:i,_rq:40},()=>{const x=covCalc0();return x.err?99:x.spread}));
-  let N=0;for(let i=1;i<=40;i++)if(g(i)<=tgt){N=i;break}
+  let N=0;if(k.wall)N=Math.min(40,k.Nrec);else for(let i=1;i<=40;i++)if(g(i)<=tgt){N=i;break}
   if(!N){let b=1;for(let i=2;i<=40;i++)if(g(i)<g(b)-0.3)b=i;N=b}
   const fine=N===k.n?k.spread:withSt({n:N},()=>covCalc0().spread);sp[N]=fine;
-  k.tgt=tgt;k.recSp=fine;k.Nrec=N;k.better=N!==k.n&&sp[N]<k.spread-0.3;
+  k.tgt=k.wall?Math.max(tgt,9):tgt;k.recSp=fine;k.Nrec=N;k.better=N!==k.n&&(k.wall||sp[N]<k.spread-0.3);
   if(!k.wall){const g=cgrid(N,k.L,k.W);k.cols=g.c;k.rows=g.r;k.recDx=k.L/g.c;k.recDy=k.W/g.r}
   else{const g=wallLayout(N,k.L,k.W,k.uni);k.cols=g.np||1;k.perRow=Math.ceil(N/k.cols)}
 }
@@ -949,24 +973,48 @@ function covCalc0(){
   if(!(L>0&&W>0&&h>0))return {err:!(L>0&&W>0)?'Informe comprimento e largura do espaço.':'A altura do teto precisa ser maior que a altura do ouvinte.'};
   const half=ang/2*Math.PI/180,r=h*Math.tan(half),cr=CRIT[st.crit]||CRIT.eq,s=r*cr[2];
   const cols=Math.max(1,Math.ceil(L/s)),rows=Math.max(1,Math.ceil(W/s)),Nrec=cols*rows;
-  const lay=layout(n,L,W,st.spc,+st.cabD||0);
+  const lay=layout(n,L,W,st.spc,+st.cabD||0),xc=audCut(Object.assign(lay,{sRef:s}),0);
   const cs=Math.max(L,W)/(st._rq||110),nx=Math.ceil(L/cs),ny=Math.ceil(W/cs),G=new Float32Array(nx*ny),vals=[];
   for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){const px=(i+.5)*cs,py=(j+.5)*cs;let e=0;
     for(const [sx,sy] of lay.P){const rr=Math.hypot(px-sx,py-sy),phi=Math.atan2(rr,h),d2=rr*rr+h*h,dir=Math.max(-24,-6*(phi/half)**2);e+=10**(dir/10)/d2}
-    const v=10*Math.log10(e);G[j*nx+i]=v;if(inA(px,py,L,W))vals.push(v)}
+    const v=10*Math.log10(e);G[j*nx+i]=v;if(inA(px,py,L,W,xc))vals.push(v)}
   const sorted=vals.slice().sort((a,b)=>a-b),mx=sorted[sorted.length-1],p5=sorted[Math.floor(sorted.length*.05)],p95=sorted[Math.floor(sorted.length*.95)];
   return {L,W,H,ear,ang,n,h,r,s,cr,cols,rows,Nrec,lay,G,nx,ny,cs,mx,spread:p95-p5,recDx:L/cols,recDy:W/rows};
+}
+const DLY_OK=35,DLY_MAX=50;
+function delayInfo(k){
+  const P=k.lay.P;if(!P||P.length<2)return null;
+  const c=343,dz=k.wall?(k.hs-k.ear):k.h,half=k.half||((k.ang||90)/2*Math.PI/180),A=k.lay.A,stp=Math.max(0.5,Math.max(k.L,k.W)/40);
+  let mx=0,at=null;
+  for(let x=Math.min(EDGE,k.L/2);x<=k.L-Math.min(EDGE,k.L/2)+1e-6;x+=stp)for(let y=Math.min(EDGE,k.W/2);y<=k.W-Math.min(EDGE,k.W/2)+1e-6;y+=stp){
+    const a=P.map(([sx,sy],q)=>{const vx=x-sx,vy=y-sy,d=Math.hypot(vx,vy,dz);let dir;
+      if(k.wall){const [ax,ay]=A[q],cc=(ax*vx+ay*vy)/d,phi=Math.acos(Math.max(-1,Math.min(1,cc)));dir=cc<=0?-24:Math.max(-24,-6*(phi/half)**2)}
+      else{const rr=Math.hypot(vx,vy);dir=Math.max(-24,-6*(Math.atan2(rr,dz)/half)**2)}
+      return {t:d/c*1000,l:dir-20*Math.log10(Math.max(d,0.5))}});
+    const lm=Math.max(...a.map(v=>v.l)),rel=a.filter(v=>v.l>=lm-10),t0=Math.min(...rel.map(v=>v.t)),dt=Math.max(...rel.map(v=>v.t))-t0;
+    if(dt>mx){mx=dt;at=[x,y]}}
+  const xs=[...new Set(P.map(p=>Math.round(p[0]*10)/10))].sort((a,b)=>a-b);
+  return {mx,at,rows:xs.map(x=>({x,ms:x/c*1000+10}))};
+}
+function delayLines(k){
+  const d=delayInfo(k);if(!d)return [];const L=[],m=Math.round(d.mx);
+  const rows=d.rows.length>1?' Atraso por fileira, contado a partir da parede da frente (onde fica o palestrante): '+d.rows.map((r,i)=>`${i+1}ª a ${fmt(r.x)} m ≈ ${fmt(Math.round(r.ms))} ms`).join(' · ')+'. Cada fileira precisa de um canal próprio do processador ou amplificador com DSP.':'';
+  if(d.mx<=DLY_OK)L.push({t:`Delay: a maior diferença de chegada entre caixas que se ouvem juntas é de cerca de ${m} ms (até ${DLY_OK} ms o ouvido junta tudo num som só). Dá para usar sem processamento de delay.`,cls:'res'});
+  else if(d.mx<=DLY_MAX)L.push({t:`Delay recomendado: a maior diferença de chegada entre caixas que se ouvem juntas é de cerca de ${m} ms. Ainda não chega a eco (a partir de ${DLY_MAX} ms), mas a fala perde nitidez; um processador de delay melhora a clareza.${rows}`,cls:'warn'});
+  else L.push({t:`Delay obrigatório: a maior diferença de chegada entre caixas que se ouvem juntas é de cerca de ${m} ms, acima de ${DLY_MAX} ms, e o público vai perceber eco. Use processamento de delay.${rows}`,cls:'warn'});
+  return L;
 }
 function covLines(k){
   const L=[];if(k.err)return [{t:k.err,cls:'warn'}];if(k.wall)return wallLines(k);
   L.push({t:`Altura útil: ${fmt(k.h)} m (teto de ${fmt(k.H)} m − ouvido a ${fmt(k.ear)} m). Com ${fmt(k.ang)}° de cobertura, cada alto-falante cobre um círculo de ${fmt(2*k.r)} m de diâmetro na altura do ouvido`});
   L.push({t:`Espaçamento recomendado para ${k.cr[0].toLowerCase()} (${k.cr[1]}): até ${fmt(k.s)} m entre alto-falantes`});
   L.push({t:`Para ${fmt(k.L)} × ${fmt(k.W)} m: ${k.Nrec} alto-falantes em grade de ${k.cols} × ${k.rows}, a cerca de ${fmt(k.recDx)} × ${fmt(k.recDy)} m um do outro`,cls:'res'});
-  const lv=k.spread<=3?'ótima':k.spread<=6?'boa para música ambiente':'irregular',sp=st.spc==='cabo'&&+st.cabD?`a ${fmt(+st.cabD)} m (distância do cabo)`:`a cerca de ${fmt(k.lay.dx)} × ${fmt(k.lay.dy)} m`;
-  L.push({t:`Com ${k.n} alto-falante${k.n>1?'s':''} ${sp}: variação de ${fmt(k.spread)} dB no ambiente · cobertura ${lv}`,cls:k.spread>6?'warn':''});
+  const lv=k.spread<=(k.tgt||6)*.5?'ótima':k.spread<=(k.tgt||6)?'boa':'irregular',sp=st.spc==='cabo'&&+st.cabD?`a ${fmt(+st.cabD)} m (distância do cabo)`:`a cerca de ${fmt(k.lay.dx)} × ${fmt(k.lay.dy)} m`;
+  L.push({t:`Com ${k.n} alto-falante${k.n>1?'s':''} ${sp}: variação de ${fmt(k.spread)} dB no ambiente · cobertura ${lv}`,cls:k.spread>(k.tgt||6)?'warn':''});
   if(st.spc==='cabo'&&+st.cabD>k.s*1.02)L.push({t:`A distância de ${fmt(+st.cabD)} m entre alto-falantes passa do recomendado (${fmt(k.s)} m): aproxime para melhorar a cobertura.`,cls:'warn'});
   if(k.better&&k.n<k.Nrec)L.push({t:`Faltam ${k.Nrec-k.n} alto-falante${k.Nrec-k.n>1?'s':''} para a cobertura recomendada.`,cls:'warn'});
   else if(!k.better&&k.spread<=k.tgt&&k.n>k.Nrec*1.5)L.push({t:`${k.n} alto-falantes é mais do que o necessário: ${k.Nrec} já cobrem o espaço.`});
+  L.push(...delayLines(k));
   L.push({t:'Mapa relativo (0 dB = ponto mais forte), considerando todos com a mesma potência; paredes e móveis não entram no cálculo. A variação é medida a partir de 0,5 m das paredes, onde as pessoas circulam.'});
   return L;
 }
@@ -1030,10 +1078,12 @@ function renderCov(){
   $('critChips').innerHTML=Object.entries(CRIT).map(([key,v])=>`<button type="button" class="chip" data-crit="${key}" aria-pressed="${key===st.crit}">${v[0]}</button>`).join('');
   $('spcChips').innerHTML=`<button type="button" class="chip" data-spc="auto" aria-pressed="${st.spc!=='cabo'}">Distribuir no espaço</button><button type="button" class="chip" data-spc="cabo" aria-pressed="${st.spc==='cabo'}" ${+st.cabD?'':'disabled'}>Distância do cabo${+st.cabD?` (${fmt(+st.cabD)} m)`:''}</button>`;
   const mm=curModel(),lockM=!!(mm&&mm.tipo),wall=st.mount==='sobrepor';
-  $('mountChips').innerHTML=[['embutir','Embutir (teto)'],['sobrepor','Sobrepor (parede)']].map(([v,l])=>`<button type="button" class="chip" data-mount="${v}" aria-pressed="${v===st.mount}" ${lockM&&v!==st.mount?'disabled':''}>${l}</button>`).join('');
-  $('mountNote').textContent=lockM?`Definido pelo modelo ${mm.b} ${mm.m}.`:wall?'Caixa presa na parede: o som sai para a frente.':'Arandela no forro: o som sai de cima para baixo.';
+  $('mountChips').innerHTML=[['embutir','Embutir'],['sobrepor','Sobrepor']].map(([v,l])=>`<button type="button" class="chip" data-mount="${v}" aria-pressed="${v===st.mount}" >${l}</button>`).join('');
+  $('mountNote').textContent=lockM?`Definido pelo modelo ${mm.b} ${mm.m}. Para trocar, toque no outro tipo (o modelo é desmarcado).`:wall?'Caixa presa na parede: o som sai para a frente.':'Arandela no forro: o som sai de cima para baixo.';
   $('wallBox').hidden=!wall;$('spcBox').hidden=wall;
   if(document.activeElement!==$('hs'))$('hs').value=st.hs||'';
+  document.querySelectorAll('#audChips [data-aud]').forEach(b=>b.setAttribute('aria-pressed',(b.dataset.aud==='1')===!!st.aud));
+  $('audNote').textContent=st.aud?'Auditório: a primeira fileira de caixas não fica junto da parede da frente (onde fica o palestrante). A distância da parede até a primeira fileira é igual à distância entre as fileiras.':'Comum: as caixas ficam distribuídas desde a parede da frente, como em uma sonorização ambiente.';
   $('uniTog').setAttribute('aria-checked',st.uni!==false);
   $('uniNote').textContent=st.uni!==false?'Ligado: todas as caixas apontam para o mesmo lado (frente → fundo), as de trás como reforço.':'Desligado: metade em cada parede, apontadas uma para a outra.';
   $('cN').textContent=st.n;$('gabTog').setAttribute('aria-checked',!!st.gab);
@@ -1044,8 +1094,8 @@ function renderCov(){
 }
 function covResHTML(k,ri){
   if(k.err)return `<p class="cname">${k.err}</p>`;
-  {const tag=k.spread<=3?'<span class="tag ok">Cobertura ótima</span>':k.spread<=6?'<span class="tag high">Cobertura boa</span>':'<span class="tag low">Cobertura irregular</span>';
-    return `<div class="rhead"><div class="big">${k.Nrec}</div><div><b>${k.wall?(k.Nrec>1?'caixas recomendadas':'caixa recomendada'):(k.Nrec>1?'alto-falantes recomendados':'alto-falante recomendado')}</b><br><span class="unit">${k.wall?`${rowTxt(k)} · uma a cada ${fmt(k.rowS)} m`:`grade ${k.cols} × ${k.rows} · até ${fmt(k.s)} m entre eles`}</span></div></div>
+  {const tag=k.spread<=(k.tgt||6)*.5?'<span class="tag ok">Cobertura ótima</span>':k.spread<=(k.tgt||6)?'<span class="tag high">Cobertura boa</span>':'<span class="tag low">Cobertura irregular</span>';
+    return `<div class="rhead"><div class="big">${k.Nrec}</div><div><b>${k.wall?(k.Nrec>1?'caixas recomendadas':'caixa recomendada'):(k.Nrec>1?'alto-falantes recomendados':'alto-falante recomendado')}</b><br><span class="unit">${k.wall?`${rowTxt(k)} · uma a cada ${fmt(Math.round(k.L/(st.aud?k.cols+1:k.cols)*10)/10)} m`:`grade ${k.cols} × ${k.rows} · até ${fmt(k.s)} m entre eles`}</span></div></div>
 <p class="calc" style="margin-top:8px">Hoje: ${k.n} alto-falante${k.n>1?'s':''} · variação de ${fmt(k.spread)} dB ${tag}</p>
 <div class="chips" style="margin-top:10px">${k.better?`<button type="button" class="chip" ${ri==null?'id="useN"':`data-usen="${ri}" data-v="${k.Nrec}"`}>Usar ${k.Nrec} ${ri==null?'na calculadora':`na sala ${ri+1}`} · variação de ${fmt(k.recSp)} dB</button>${k.recSp>k.tgt?'<span class="unit">Nenhuma quantidade chega ao objetivo neste espaço; esta é a de menor variação.</span>':''}`:k.spread<=k.tgt?'<span class="unit">A quantidade atual já atende o objetivo escolhido.</span>':''}${k.wall||ri!=null?'':`<button type="button" class="chip" id="useD">Distância do cabo: ${fmt(Math.max(k.recDx,k.recDy))} m</button>`}</div>${st.ampRev&&st.ampRevR===(ri==null?-1:ri)?arHTML():''}`;}
 }
@@ -1161,7 +1211,44 @@ ${r.n>1?`<label class="unit">Distância entre os alto-falantes<div class="range"
 const arHTML=()=>st.ampRev?`<div class="caution"><b>⚠ Revise o amplificador</b>A quantidade de alto-falantes mudou pela cobertura sonora (${st.ampRev}). Confira se o amplificador ainda atende, ou escolha outro na sugestão.<div class="chips" style="margin-top:8px"><button type="button" class="chip pri" data-arv="go">Ver sugestão de amplificadores</button><button type="button" class="chip" data-arv="x">Dispensar</button></div></div>`:'';
 function arModal(){if(!st.ampRev)return;const d=document.createElement('div');d.className='mdl';d.setAttribute('role','dialog');d.setAttribute('aria-modal','true');d.innerHTML=arHTML().replace('data-arv="x">Dispensar','data-arv="ok">OK');d.onclick=e=>{const b=e.target.closest('[data-arv]');if(e.target===d||b)d.remove();if(b&&b.dataset.arv==='ok')e.stopPropagation()};document.body.appendChild(d);setTimeout(()=>{const b=d.querySelector('[data-arv="ok"]');b&&b.focus()},0)}
 function renderAr(){$('arImp').innerHTML=arHTML();$('arCov').innerHTML=arHTML()}
-function render(){
+const APPNOTE={musical:'Música em volume alto: o canal deve ter de 1,5 a 2× a soma dos alto-falantes.',leve:'Volume ambiente baixo (clínicas, lojas, escritórios): aceita canal a partir de 0,6× a soma dos alto-falantes, e as sugestões passam a indicar amplificadores menores.'};
+function renderApp(){if(!st.app)st.app='musical';document.querySelectorAll('#appChips [data-app]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.app===st.app));$('appNote').textContent=APPNOTE[st.app]}
+// ===== Montar sistema =====
+function sysBuild(){
+  const RM=st.multi?rooms().map(r=>({L:+r.L,W:+r.W,H:+r.H})):[{L:+st.cL,W:+st.cW,H:+st.cH}];
+  if(RM.some(r=>!(r.L>0&&r.W>0&&r.H>0)))return {msg:'Preencha comprimento, largura e altura para montar o sistema.'};
+  const Hm=Math.max(...RM.map(r=>r.H)),d=st.mount==='sobrepor'?Math.max(1,Math.max(...RM.map(r=>r.W))/2):Math.max(1,Hm-(+st.ear||1.2));
+  const tgt=st.app==='leve'?85:98,need=Math.max(5,Math.pow(10,(tgt-87+20*Math.log10(d)-3)/10));
+  const C=allModels().filter(m=>m.tipo===st.mount&&m.z>0&&m.p>0&&!/jardim|garden|rock|outdoor/i.test(m.m)).sort((a,b)=>a.p-b.p||((b.ang?1:0)-(a.ang?1:0)));
+  const ok=C.filter(m=>m.p>=need);if(!ok.length)return {msg:`Nenhuma caixa de ${st.mount} cadastrada chega aos ${fmt(need)} W estimados para este espaço.`};
+  const pick=[],seen=new Set(),add=m=>{if(m&&!seen.has(m.b+'|'+m.m)&&!pick.some(x=>x.p===m.p)){pick.push(m);seen.add(m.b+'|'+m.m)}};
+  add(ok[0]);add(ok.find(m=>m.p>=need*2)||ok[Math.floor(ok.length/2)]);add(ok.find(m=>m.p>=need*4)||ok[ok.length-1]);
+  for(const m of ok){if(pick.length>=3)break;add(m)}
+  const NC=new Map(),nFor=(r,ang)=>{const key=[r.L,r.W,r.H,ang,st.mount,st.crit,st.aud?1:0].join('|');if(!NC.has(key))NC.set(key,withSt({cL:r.L,cW:r.W,cH:r.H,n:4,cAng:ang,spc:'auto',multi:false},()=>{const k=covCalc();return k.err?null:{N:Math.min(32,k.Nrec),sp:k.recSp}}));return NC.get(key)};
+  const names=['Econômica','Equilibrada','Robusta'],out=[];
+  pick.slice(0,3).forEach((m,i)=>{const ang=m.ang||angOv(m)||+st.cAng||90,ns=RM.map(r=>nFor(r,ang));if(ns.some(x=>!x))return;
+    const o={useModel:true,brand:m.b,model:m.m,pspk:m.p,z:m.z,cAng:ang,allCh:false,useAmp:false,trafo:false,sugK:null,sel:null};
+    if(st.multi)o.R=rooms().map((r,j)=>({...r,n:ns[j].N}));else o.n=ns[0].N;
+    const s=withSt(o,()=>sugAmps()),x=s&&s.L&&s.L[0];
+    out.push({tier:names[i],m,ang,ns,x})});
+  return {need,d,out}}
+let SYS=null;
+function sysHTML(){if(!SYS)return '';if(SYS.msg)return `<div class="sysBox"><p class="sysHead">${SYS.msg}</p></div>`;
+  const tn=st.app==='leve'?'sonorização leve':'musical';
+  return `<div class="sysBox"><p class="sysHead">Aplicação ${tn} · ${st.mount==='sobrepor'?'caixas de sobrepor':'caixas de embutir'} · cada caixa precisa de cerca de ${fmt(SYS.need)} W (estimado, a ${fmt(SYS.d)} m de quem ouve)</p>
+  <div class="chips"><button type="button" class="chip" data-sapp="musical" aria-pressed="${st.app!=='leve'}">Musical</button><button type="button" class="chip" data-sapp="leve" aria-pressed="${st.app==='leve'}">Sonorização leve</button></div>
+  ${SYS.out.map((o,i)=>{const q=st.multi?o.ns.map((n,j)=>`Sala ${j+1}: ${n.N}`).join(' · '):`${o.ns[0].N} caixas`,tot=o.ns.reduce((a,n)=>a+n.N,0);
+    return `<div class="sysCard"><h4><span>${o.tier}</span>${o.x?`<span class="tag ${o.x.tag[0]==='ok'?'ok':o.x.tag[0]==='mid'?'high':'low'}">${o.x.tag[1]}</span>`:''}</h4>
+    <p><b>${q}</b> · ${o.m.b} ${o.m.m}</p><p class="unit">${fmt(o.m.p)} W · ${fmt(o.m.z)} Ω · ${o.m.ang?`${o.m.ang}° (ficha)`:`${o.ang}° (o que você digitou, a ficha não informa)`} · variação ${o.ns.map(n=>fmt(n.sp)+' dB').join(' / ')}</p>
+    <p>${o.x?`Amplificador: <b>${o.x.a.b} ${o.x.a.m}</b>${o.x.a.isBr?' <em class="brb on">em bridge</em>':''}`:'Nenhum amplificador cadastrado atende esta combinação.'}</p>${o.x?`<p class="unit">${o.x.sub}</p>`:''}
+    <button type="button" class="sysUse" data-sys="${i}">Usar este sistema (${tot} caixas)</button></div>`}).join('')}
+  <p class="unit" style="margin:0">Potência estimada com sensibilidade típica de 87 dB (as fichas não trazem esse dado). Depois de aplicar, você pode mudar a quantidade e o modelo normalmente.</p></div>`}
+function sysApply(i){const o=SYS.out[i];if(!o)return;st.useModel=true;st.brand=o.m.b;st.model=o.m.m;applyModel();st.cAng=o.ang;st.allCh=false;st.sugK=null;st.sel=null;
+  if(st.multi){const R=rooms();R.forEach((r,j)=>{r.n=o.ns[j].N;r.cabD=''});$('rList').innerHTML=''}else{st.n=o.ns[0].N;const k=withSt({cAng:o.ang},()=>covCalc());if(!k.err&&!k.wall)st.cabD=+fmt(Math.max(k.recDx,k.recDy)).replace(',','.')}
+  if(o.x){const a=o.x.a;st.useAmp=true;st.ampB=a.b;st.ampM=a.isBr?a.base.m:a.m;st.bridge=!!a.isBr;st.ampRev=null;applyAmp();if(!st.multi){setK(o.x.k||1);useSels([].concat(o.x.sels||[]).join(','),o.x.k||1)}}
+  SYS={applied:true};render();
+  $('sysOut').innerHTML=`<div class="sysBox"><p class="sysHead" style="color:var(--ink)">✓ Sistema aplicado: ${o.m.b} ${o.m.m}${o.x?` com ${o.x.a.b} ${o.x.a.m}`:''}.</p><button type="button" class="chip" data-pgo="imp">Ver a ligação na aba Impedância</button></div>`}
+function render(){renderApp();
   const list=configs();
   if(!list.find(c=>c.id===st.sel))st.sel=list[0].id;
   const c=list.find(c=>c.id===st.sel);cur=c;
@@ -1207,12 +1294,14 @@ $('cabChips').onclick=e=>{const b=e.target.closest('[data-a]');if(b){st.cabA=+b.
 document.addEventListener('click',e=>{const b=e.target.closest('[data-arv]');if(!b)return;if(b.dataset.arv==='x'){st.ampRev=null;render();return}
   st.page='imp';st.sugS=false;st.sugA=true;st.sugCol=false;render();setTimeout(()=>$('sugATog').scrollIntoView({block:'start',behavior:'smooth'}),50)});
 document.querySelector('.tabs').onclick=e=>{const b=e.target.closest('[data-pg]');if(b){st.page=b.dataset.pg;render();scrollTo({top:0})}};
-['cL','cW','cH','cAng'].forEach(i=>$(i).oninput=e=>{st[i]=e.target.value;if(i==='cAng'){const m=curModel();if(m&&!m.ang){st.angOv=st.angOv||{};const v=+e.target.value;if(v>=30&&v<=180)st.angOv[m.b+'|'+m.m]=v;else delete st.angOv[m.b+'|'+m.m]}}render()});
-$('earChips').onclick=e=>{const b=e.target.closest('[data-ear]');if(b){st.ear=+b.dataset.ear;render()}};
-$('critChips').onclick=e=>{const b=e.target.closest('[data-crit]');if(b){st.crit=b.dataset.crit;render()}};
+['cL','cW','cH','cAng'].forEach(i=>$(i).oninput=e=>{st[i]=e.target.value;sysClr();if(i==='cAng'){const m=curModel();if(m&&!m.ang){st.angOv=st.angOv||{};const v=+e.target.value;if(v>=30&&v<=180)st.angOv[m.b+'|'+m.m]=v;else delete st.angOv[m.b+'|'+m.m]}}render()});
+const sysRe=()=>{if(SYS&&!SYS.applied){SYS=sysBuild();$('sysOut').innerHTML=sysHTML()}},sysClr=()=>{if(SYS&&!SYS.applied){SYS=null;$('sysOut').innerHTML=''}};
+$('earChips').onclick=e=>{const b=e.target.closest('[data-ear]');if(b){st.ear=+b.dataset.ear;render();sysRe()}};
+$('critChips').onclick=e=>{const b=e.target.closest('[data-crit]');if(b){st.crit=b.dataset.crit;render();sysRe()}};
 $('spcChips').onclick=e=>{const b=e.target.closest('[data-spc]');if(b&&!b.disabled){st.spc=b.dataset.spc;render()}};
-$('mountChips').onclick=e=>{const b=e.target.closest('[data-mount]');if(b&&!b.disabled){st.mount=b.dataset.mount;render()}};
+$('mountChips').onclick=e=>{const b=e.target.closest('[data-mount]');if(!b)return;const v=b.dataset.mount,mm=curModel();if(mm&&mm.tipo&&mm.tipo!==v){st.model='';st.sel=null}st.mount=v;render();if(SYS&&!SYS.applied){SYS=sysBuild();$('sysOut').innerHTML=sysHTML()}};
 $('hs').oninput=e=>{st.hs=e.target.value;render()};
+$('audChips').onclick=e=>{const b=e.target.closest('[data-aud]');if(!b)return;st.aud=b.dataset.aud==='1';render();if(SYS&&!SYS.applied){SYS=sysBuild();$('sysOut').innerHTML=sysHTML()}};
 $('uniTog').onclick=()=>{st.uni=st.uni===false;render()};
 $('cMinus').onclick=()=>setN(st.n-1);$('cPlus').onclick=()=>setN(st.n+1);
 $('covRes').onclick=e=>{const k=covCalc();if(k.err)return;if(e.target.id==='useN'){const o=st.n;st.n=Math.min(32,k.Nrec);st.sel=null;st.ampRev=`de ${o} para ${st.n}`;st.ampRevR=-1;render();arModal()}if(e.target.id==='useD'){st.cabD=Math.round(Math.max(k.recDx,k.recDy)*10)/10;render()}};
@@ -1242,6 +1331,15 @@ $('aTog').onclick=()=>{st.useAmp=!st.useAmp;if(st.useAmp)applyAmp();render()};
 $('ampB').onchange=e=>{st.ampB=e.target.value;st.ampM='';st.bridge=false;render()};
 $('ampM').onchange=e=>{st.ampM=e.target.value;st.bridge=false;st.ampRev=null;applyAmp();render()};
 $('flexTog').onclick=()=>{st.flex=!st.flex;render()};
+$('appChips').onclick=e=>{const b=e.target.closest('[data-app]');if(b){st.app=b.dataset.app;render()}};
+$('sysBtn').onclick=()=>{SYS=sysBuild();$('sysOut').innerHTML=sysHTML();$('sysOut').scrollIntoView({block:'nearest',behavior:'smooth'})};
+$('sysOut').onclick=e=>{const a=e.target.closest('[data-sapp]');if(a){st.app=a.dataset.sapp;SYS=sysBuild();render();$('sysOut').innerHTML=sysHTML();return}
+  const u=e.target.closest('[data-sys]');if(u){sysApply(+u.dataset.sys);return}
+  if(e.target.closest('[data-pgo]')){st.page='imp';render();scrollTo(0,0)}};
+$('rstBtn').onclick=()=>{const d=document.createElement('div');d.className='mdl';d.setAttribute('role','dialog');d.setAttribute('aria-modal','true');
+  d.innerHTML=`<div class="caution" style="background:var(--box);color:var(--ink);border-color:var(--line)"><b>Resetar a calculadora?</b>Todos os campos voltam aos valores iniciais: caixas, amplificador, salas, cabo e cobertura. Os ângulos que você digitou para os modelos continuam salvos.<div class="chips" style="margin-top:12px"><button type="button" class="chip pri" data-rst="ok" style="background:var(--red);border-color:var(--red);color:#fff">Resetar</button><button type="button" class="chip" data-rst="x">Cancelar</button></div></div>`;
+  d.onclick=e=>{const b=e.target.closest('[data-rst]');if(!b&&e.target!==d)return;d.remove();if(b&&b.dataset.rst==='ok'){const keep=st.angOv;st=JSON.parse(JSON.stringify(DEF));if(keep)st.angOv=keep;SYS=null;$('sysOut').innerHTML='';try{$('rList').innerHTML=''}catch(_){}render();scrollTo(0,0)}};
+  document.body.appendChild(d)};
 $('brTog').onclick=()=>{st.bridge=!st.bridge;applyAmp();render()};
 $('aaSave').onclick=()=>{const b=$('aaB').value.trim(),m=$('aaM').value.trim(),p8=+$('aa8').value||0,p4=+$('aa4').value||0,p2=+$('aa2').value||0;
   if(!b||!m||!p8||!p4){$('aaMsg').textContent='Preencha marca, modelo e as potências em 8 e 4 Ω.';return}
@@ -1295,9 +1393,9 @@ function wrap(x,t,mw){const L=[];let line='';for(const w of t.split(' ')){const 
 function sections(c){
   if(c.tf){const tl=trafoLines(),k=trafo(),S=[{h:'Dados informados',L:[mlabel()?`Modelo: ${mlabel()}`:'',`${st.n} alto-falante${st.n>1?'s':''} de ${fmt(st.z)} Ω${+st.pspk?`, ${fmt(+st.pspk)} W RMS cada`:''}`,`Linha de ${k.V} V, TAP de ${fmt(k.t)} W em cada alto-falante`,k.pc?`Potência do canal do amplificador: ${fmt(k.pc)} W`:'',k.R?`Cabo ${mm(+st.cabA||1.5)}, ${fmt(cabTot())} m no total (${fmt(+st.cabL)} m até o primeiro${+st.cabD&&st.n>1?` + ${st.n-1} × ${fmt(+st.cabD)} m entre eles`:''})`:''].filter(Boolean)}];
     [['Ligação','Ligação'],['Potência','Potência e amplificador'],['Cabo','Cabo'],['Recomendações','Recomendações']].forEach(([k2,h])=>{const L=tl.filter(l=>l.sec===k2).map(l=>l.t);if(L.length)S.push({h,L})});return S}
-  const isRec=t=>/^(Para ficar|Mesmo com|Ligue o|Comprar|O resistor pode|Ajuste o limitador)/.test(t);
+  const isRec=t=>/^(Para ficar|Mesmo com|Ligue o|Comprar|O resistor pode|Ajuste o limitador|O canal tem menos)/.test(t);
   const pw=powerLines(c).map(l=>l.t),cb=cableLines(c).map(l=>l.t),k=cable(c),pc=pcOf(c),S=[],rec=[];
-  S.push({h:'Dados informados',L:[mlabel()?`Modelo: ${mlabel()}`:'',`${st.n} alto-falante${st.n>1?'s':''} de ${fmt(st.z)} Ω${+st.pspk?`, ${fmt(+st.pspk)} W RMS cada`:''}`,`Faixa aceita pelo amplificador: ${fmt(st.min)} a ${fmt(st.max)} Ω`,+st.pch||+st.pch4?`Canal do amplificador${curAmp()?` ${curAmp().b} ${curAmp().m}`:''}: ${(v=>[[v.p8,8],[v.p4,4],[v.p2,2]])(ampVals()).filter(v=>v[0]).map(v=>`${fmt(v[0])} W em ${v[1]} Ω`).join(' · ')}; nesta ligação, cerca de ${fmt(pc)} W`:'',k?`Cabo ${mm(k.A)}, ${fmt(k.L)} m no total (${fmt(k.first)} m até o primeiro${k.d&&st.n>1?` + ${st.n-1} × ${fmt(k.d)} m entre eles`:''})`:''].filter(Boolean)});
+  S.push({h:'Dados informados',L:[mlabel()?`Modelo: ${mlabel()}`:'',`${st.n} alto-falante${st.n>1?'s':''} de ${fmt(st.z)} Ω${+st.pspk?`, ${fmt(+st.pspk)} W RMS cada`:''}`,`Faixa aceita pelo amplificador: ${fmt(st.min)} a ${fmt(st.max)} Ω`,`Aplicação: ${AP().nm}`,+st.pch||+st.pch4?`Canal do amplificador${curAmp()?` ${curAmp().b} ${curAmp().m}`:''}: ${(v=>[[v.p8,8],[v.p4,4],[v.p2,2]])(ampVals()).filter(v=>v[0]).map(v=>`${fmt(v[0])} W em ${v[1]} Ω`).join(' · ')}; nesta ligação, cerca de ${fmt(pc)} W`:'',k?`Cabo ${mm(k.A)}, ${fmt(k.L)} m no total (${fmt(k.first)} m até o primeiro${k.d&&st.n>1?` + ${st.n-1} × ${fmt(k.d)} m entre eles`:''})`:''].filter(Boolean)});
   S.push({h:'Ligação',L:[c.name,c.calc,k?`Com o cabo: ${fmt(c.zt)} Ω + ${fmt(k.R)} Ω = ${fmt(c.zt+k.R)} Ω vistos pelo amplificador`:'',`Situação: ${TAG[c.st].toLowerCase()} do amplificador`].filter(Boolean)});
   const p2=(k&&pc?[`No final: ${fmt(pc*(1-k.loss))} W chegam aos alto-falantes e ${fmt(pc*k.loss)} W se perdem no cabo`]:[]).concat(pw.filter(t=>!isRec(t)));
   if(p2.length)S.push({h:c.r?'Potência e resistor':'Potência',L:p2});
