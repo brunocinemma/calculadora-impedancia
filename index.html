@@ -68,7 +68,7 @@ h2{font:700 22px/1.2 "Inter Tight",sans-serif;margin:8px 0 10px}
 .note{color:var(--mute);font-size:13px;margin:14px 0 0;max-width:80ch}
 .expbtn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:54px;padding:0 22px;border:0;border-radius:14px;background:var(--red);color:#fff;font:700 17px Inter,sans-serif;cursor:pointer;box-shadow:0 2px 0 color-mix(in srgb,var(--red) 60%,#000)}
 .expbtn:hover{filter:brightness(1.08)}.expbtn:active{transform:translateY(1px);box-shadow:none}
-@media(max-width:600px){.expbtn{width:100%}}
+@media(max-width:600px){.range .expbtn{width:auto;flex:1 1 150px;min-width:0}.range .hb{min-height:54px;flex:0 0 auto;padding:0 16px}}
 .tog{display:inline-flex;align-items:center;gap:10px;min-height:44px;background:none;border:0;padding:0;font:600 15px/1 inherit;font-family:inherit;color:var(--ink);cursor:pointer}
 .sw{width:50px;height:30px;border-radius:999px;background:var(--line);position:relative;transition:background .2s;flex:none}
 .sw::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.35);transition:transform .2s}
@@ -232,7 +232,7 @@ li.caut{color:#8a6a00;font-weight:600}
 <section class="diag">
 <div class="scroll" id="fig"></div>
 <div class="legend"><span><i style="background:var(--red)"></i>Positivo (+)</span><span><i style="background:var(--blue)"></i>Negativo (−)</span><span><i style="background:var(--jump)"></i>Jumper série (− de um no + do outro)</span></div>
-<div class="range"><button type="button" class="expbtn" id="exp" aria-expanded="false" aria-controls="expMenu"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M6 10l6 6 6-6M4 20h16"/></svg>Exportar<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button><span class="unit" id="expMsg" aria-live="polite"></span></div>
+<div class="range"><button type="button" class="expbtn" id="exp" aria-expanded="false" aria-controls="expMenu"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M6 10l6 6 6-6M4 20h16"/></svg>Exportar<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button><button type="button" class="chip hb" id="hbI" aria-pressed="false" title="Exporta sem mostrar marca nem modelo">Ocultar marcas</button><span class="unit" id="expMsg" aria-live="polite"></span></div>
 <div class="expmenu" id="expMenu" hidden><button type="button" class="expopt" id="expJpg"><b>JPEG</b><span>Só a imagem do esquema</span></button><button type="button" class="expopt" id="expPdf"><b>PDF</b><span>2 páginas: esquema + descritivo</span></button></div>
 </section>
 </div>
@@ -262,7 +262,7 @@ li.caut{color:#8a6a00;font-weight:600}
 <section class="diag"><div class="scroll" id="covFig"><canvas id="cv"></canvas></div>
 <div class="legend" style="align-items:center"><span>0 dB</span><span class="grad"></span><span>−12 dB ou menos</span><span><i style="background:#fff;outline:2px solid #111418;width:12px;height:12px;border-radius:50%"></i>alto-falante · círculo tracejado = cobertura no ouvido</span></div>
 <button type="button" class="tog" id="gabTog" role="switch" aria-checked="true"><span class="sw pink"></span><span>Medidas para instalação (linhas de alinhamento e cotas)</span></button>
-<div class="range"><button type="button" class="expbtn" id="cexp" aria-expanded="false" aria-controls="cexpMenu"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M6 10l6 6 6-6M4 20h16"/></svg>Exportar<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button><span class="unit" id="cexpMsg" aria-live="polite"></span></div>
+<div class="range"><button type="button" class="expbtn" id="cexp" aria-expanded="false" aria-controls="cexpMenu"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M6 10l6 6 6-6M4 20h16"/></svg>Exportar<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button><button type="button" class="chip hb" id="hbC" aria-pressed="false" title="Exporta sem mostrar marca nem modelo">Ocultar marcas</button><span class="unit" id="cexpMsg" aria-live="polite"></span></div>
 <div class="expmenu" id="cexpMenu" hidden><button type="button" class="expopt" id="cexpJpg"><b>JPEG</b><span>Só a imagem do mapa</span></button><button type="button" class="expopt" id="cexpPdf"><b>PDF</b><span>Mapa com medidas + descritivo</span></button></div>
 <ul class="pw" id="covLines"></ul></section>
 </div><div id="covRoomsOut" hidden></div></div>
@@ -892,6 +892,22 @@ function applyModel(){
   else st.trafo=false;
 }
 const mlabel=()=>{const m=curModel();return m?`${m.b} ${m.m}`:''};
+const spkL=()=>st.hideB?'':mlabel();
+const ampL=()=>{const a=!st.hideB&&curAmp();return a?`${a.b} ${a.m}`:''};
+const rxe=s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+let ANON=null;
+function anon(t){
+  if(!st.hideB||typeof t!=='string')return t;
+  if(!ANON){const A=[],S=[];try{ampPool().forEach(a=>A.push(`${a.b} ${a.m}`));AMPS.forEach(a=>A.push(`${a.b} ${a.m}`))}catch(_){}
+    try{allModels().forEach(m=>S.push(`${m.b} ${m.m}`))}catch(_){}
+    const k=l=>[...new Set(l)].sort((p,q)=>q.length-p.length);ANON={A:k(A),S:k(S)}}
+  let o=t;
+  for(const n of ANON.A){if(!o.includes(n))continue;const e=rxe(n);o=o.replace(new RegExp('(amplificador )'+e,'gi'),'$1').replace(new RegExp('(^|[^a-zà-ú])'+e,'g'),'$1amplificador')}
+  for(const n of ANON.S){if(!o.includes(n))continue;const e=rxe(n);o=o.replace(new RegExp('(alto-falantes?|caixas?) '+e,'gi'),'$1').replace(new RegExp('(^|[^a-zà-ú])'+e,'g'),'$1alto-falante')}
+  o=o.replace(/(amplificador|alto-falantes?|caixas?) (?=[:,.;)])/gi,'$1').replace(/amplificador amplificador/gi,'amplificador').replace(/alto-falante alto-falante/gi,'alto-falante').replace(/^amplificador/,'Amplificador').replace(/^alto-falante/,'Alto-falante');
+  return o.replace(/^Modelo: alto-falante$/,'');
+}
+const anS=S=>S.map(s=>({h:s.h,L:s.L.map(anon).filter(Boolean)}));
 function renderModel(){
   $('mTog').setAttribute('aria-checked',!!st.useModel);$('mOpts').hidden=!st.useModel;
   $('brand').innerHTML=brands().map(b=>`<option${b===st.brand?' selected':''}>${b}</option>`).join('');
@@ -1254,7 +1270,7 @@ function sysApply(i){const o=SYS.out[i];if(!o)return;st.useModel=true;st.brand=o
   if(o.x){const a=o.x.a;st.useAmp=true;st.ampB=a.b;st.ampM=a.isBr?a.base.m:a.m;st.bridge=!!a.isBr;st.ampRev=null;applyAmp();if(!st.multi){setK(o.x.k||1);useSels([].concat(o.x.sels||[]).join(','),o.x.k||1)}}
   SYS={applied:true};render();
   $('sysOut').innerHTML=`<div class="sysBox"><p class="sysHead" style="color:var(--ink)">✓ Sistema aplicado: ${o.m.b} ${o.m.m}${o.x?` com ${o.x.a.b} ${o.x.a.m}`:''}.</p><button type="button" class="chip" data-pgo="imp">Ver a ligação na aba Impedância</button></div>`}
-function render(){renderApp();
+function render(){renderApp();document.querySelectorAll('.hb').forEach(b=>b.setAttribute('aria-pressed',!!st.hideB));
   const list=configs();
   if(!list.find(c=>c.id===st.sel))st.sel=list[0].id;
   const c=list.find(c=>c.id===st.sel);cur=c;
@@ -1380,29 +1396,31 @@ async function svgImg(){
   const img=new Image();img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(s);await img.decode();
   return {img,W,H};
 }
-let RL='',PGO=0,PGT=0;
-const title1=()=>RL+(mlabel()?mlabel()+' · ':'')+(cur.tf?`${st.n} alto-falantes · TAP ${fmt(trafo().t)} W @ ${trafo().V} V → ${fmt(trafo().P)} W`:`${st.n} alto-falante${st.n>1?'s':''} de ${fmt(st.z)} Ω${+st.pspk?` / ${fmt(+st.pspk)} W`:''} → ${fmt(cur.zt+cabR())} Ω${cabR()?' (com cabo)':''}`);
+let RL='',PGO=0,PGT=0,HDX=0;
+const title1=()=>RL+(spkL()?spkL()+' · ':'')+(cur.tf?`${st.n} alto-falantes · TAP ${fmt(trafo().t)} W @ ${trafo().V} V → ${fmt(trafo().P)} W`:`${st.n} alto-falante${st.n>1?'s':''} de ${fmt(st.z)} Ω${+st.pspk?` / ${fmt(+st.pspk)} W`:''} → ${fmt(cur.zt+cabR())} Ω${cabR()?' (com cabo)':''}`);
 async function makeJpg(){
   const {img,W,H}=await svgImg();
-  const t1=title1(),t2=cur.name,t3=cur.calc,pl=(cur.tf?trafoLines():powerLines(cur).concat(cableLines(cur))).map(l=>l.t);
-  const cv=document.createElement('canvas'),x=cv.getContext('2d'),sc=1.5,head=96+pl.length*20;
+  const t1=title1(),t2=anon(cur.name),t3=anon(cur.calc),pl=(cur.tf?trafoLines():powerLines(cur).concat(cableLines(cur))).map(l=>anon(l.t)).filter(Boolean),aL=ampL();
+  const cv=document.createElement('canvas'),x=cv.getContext('2d'),sc=1.5,head=96+pl.length*20+(aL?24:0);
   x.font='14px Inter, Arial, sans-serif';const tw=Math.max(x.measureText(t2).width,x.measureText(t3).width,...pl.map(t=>x.measureText(t).width))+32;
   const CW=Math.ceil(Math.max(W,tw,320));cv.width=CW*sc;cv.height=(H+head)*sc;x.scale(sc,sc);
   x.fillStyle='#fff';x.fillRect(0,0,CW,H+head);x.fillStyle='#111418';
   x.font='bold 22px Inter, Arial, sans-serif';x.fillText(t1,16,34);
-  x.font='15px Inter, Arial, sans-serif';x.fillText(t2,16,60);
-  x.fillStyle='#5b6470';x.font='13px Inter, Arial, sans-serif';x.fillText(t3,16,82);
-  x.fillStyle='#111418';pl.forEach((t,i)=>x.fillText(t,16,104+i*20));
+  x.font='15px Inter, Arial, sans-serif';x.fillText(t2,16,60+(aL?0:0));
+  const dy=aL?24:0;if(aL){x.fillStyle='#5b6470';x.fillText('Amplificador: '+aL.replace(/^Amplificador: /,''),16,82)}
+  x.fillStyle='#5b6470';x.font='13px Inter, Arial, sans-serif';x.fillText(t3,16,82+dy);
+  x.fillStyle='#111418';pl.forEach((t,i)=>x.fillText(t,16,104+dy+i*20));
   x.drawImage(img,(CW-W)/2,head,W,H);
   return new Promise(r=>cv.toBlob(r,'image/jpeg',0.6));
 }
 function wrap(x,t,mw){const L=[];let line='';for(const w of t.split(' ')){const tt=line?line+' '+w:w;if(x.measureText(tt).width>mw&&line){L.push(line);line=w}else line=tt}if(line)L.push(line);return L}
-function sections(c){
-  if(c.tf){const tl=trafoLines(),k=trafo(),S=[{h:'Dados informados',L:[mlabel()?`Modelo: ${mlabel()}`:'',`${st.n} alto-falante${st.n>1?'s':''} de ${fmt(st.z)} Ω${+st.pspk?`, ${fmt(+st.pspk)} W RMS cada`:''}`,`Linha de ${k.V} V, TAP de ${fmt(k.t)} W em cada alto-falante`,k.pc?`Potência do canal do amplificador: ${fmt(k.pc)} W`:'',k.R?`Cabo ${mm(+st.cabA||1.5)}, ${fmt(cabTot())} m no total (${fmt(+st.cabL)} m até o primeiro${+st.cabD&&st.n>1?` + ${st.n-1} × ${fmt(+st.cabD)} m entre eles`:''})`:''].filter(Boolean)}];
+function sections(c){return anS(sections0(c))}
+function sections0(c){
+  if(c.tf){const tl=trafoLines(),k=trafo(),S=[{h:'Dados informados',L:[spkL()?`Modelo: ${spkL()}`:'',`${st.n} alto-falante${st.n>1?'s':''} de ${fmt(st.z)} Ω${+st.pspk?`, ${fmt(+st.pspk)} W RMS cada`:''}`,`Linha de ${k.V} V, TAP de ${fmt(k.t)} W em cada alto-falante`,k.pc?`Potência do canal do amplificador: ${fmt(k.pc)} W`:'',k.R?`Cabo ${mm(+st.cabA||1.5)}, ${fmt(cabTot())} m no total (${fmt(+st.cabL)} m até o primeiro${+st.cabD&&st.n>1?` + ${st.n-1} × ${fmt(+st.cabD)} m entre eles`:''})`:''].filter(Boolean)}];
     [['Ligação','Ligação'],['Potência','Potência e amplificador'],['Cabo','Cabo'],['Recomendações','Recomendações']].forEach(([k2,h])=>{const L=tl.filter(l=>l.sec===k2).map(l=>l.t);if(L.length)S.push({h,L})});return S}
   const isRec=t=>/^(Para ficar|Mesmo com|Ligue o|Comprar|O resistor pode|Ajuste o limitador|O canal tem menos)/.test(t);
   const pw=powerLines(c).map(l=>l.t),cb=cableLines(c).map(l=>l.t),k=cable(c),pc=pcOf(c),S=[],rec=[];
-  S.push({h:'Dados informados',L:[mlabel()?`Modelo: ${mlabel()}`:'',`${st.n} alto-falante${st.n>1?'s':''} de ${fmt(st.z)} Ω${+st.pspk?`, ${fmt(+st.pspk)} W RMS cada`:''}`,`Faixa aceita pelo amplificador: ${fmt(st.min)} a ${fmt(st.max)} Ω`,`Aplicação: ${AP().nm}`,+st.pch||+st.pch4?`Canal do amplificador${curAmp()?` ${curAmp().b} ${curAmp().m}`:''}: ${(v=>[[v.p8,8],[v.p4,4],[v.p2,2]])(ampVals()).filter(v=>v[0]).map(v=>`${fmt(v[0])} W em ${v[1]} Ω`).join(' · ')}; nesta ligação, cerca de ${fmt(pc)} W`:'',k?`Cabo ${mm(k.A)}, ${fmt(k.L)} m no total (${fmt(k.first)} m até o primeiro${k.d&&st.n>1?` + ${st.n-1} × ${fmt(k.d)} m entre eles`:''})`:''].filter(Boolean)});
+  S.push({h:'Dados informados',L:[spkL()?`Modelo: ${spkL()}`:'',`${st.n} alto-falante${st.n>1?'s':''} de ${fmt(st.z)} Ω${+st.pspk?`, ${fmt(+st.pspk)} W RMS cada`:''}`,`Faixa aceita pelo amplificador: ${fmt(st.min)} a ${fmt(st.max)} Ω`,`Aplicação: ${AP().nm}`,+st.pch||+st.pch4?`Canal do amplificador${curAmp()?` ${curAmp().b} ${curAmp().m}`:''}: ${(v=>[[v.p8,8],[v.p4,4],[v.p2,2]])(ampVals()).filter(v=>v[0]).map(v=>`${fmt(v[0])} W em ${v[1]} Ω`).join(' · ')}; nesta ligação, cerca de ${fmt(pc)} W`:'',k?`Cabo ${mm(k.A)}, ${fmt(k.L)} m no total (${fmt(k.first)} m até o primeiro${k.d&&st.n>1?` + ${st.n-1} × ${fmt(k.d)} m entre eles`:''})`:''].filter(Boolean)});
   S.push({h:'Ligação',L:[c.name,c.calc,k?`Com o cabo: ${fmt(c.zt)} Ω + ${fmt(k.R)} Ω = ${fmt(c.zt+k.R)} Ω vistos pelo amplificador`:'',`Situação: ${TAG[c.st].toLowerCase()} do amplificador`].filter(Boolean)});
   const p2=(k&&pc?[`No final: ${fmt(pc*(1-k.loss))} W chegam aos alto-falantes e ${fmt(pc*k.loss)} W se perdem no cabo`]:[]).concat(pw.filter(t=>!isRec(t)));
   if(p2.length)S.push({h:c.r?'Potência e resistor':'Potência',L:p2});
@@ -1418,8 +1436,9 @@ function pageHead(x,t,n,sub,tot){
   x.fillStyle='#fff';x.fillRect(0,0,PW,PH);x.fillStyle='#111418';x.font=`bold 46px ${FONT}`;x.fillText((RL?RL.replace(/ · $/,'')+' · ':'')+t,M,M+30);
   x.font=`26px ${FONT}`;x.fillStyle='#5b6470';x.fillText(sub||title1().slice(RL.length),M,M+78);
   x.textAlign='right';x.fillText(new Date().toLocaleDateString('pt-BR'),PW-M,M+30);x.textAlign='left';
-  x.fillStyle='#111418';x.fillRect(M,M+104,PW-2*M,3);
-  x.font=`20px ${FONT}`;x.fillStyle='#5b6470';x.fillText(`Calculadora de impedância · página ${PGT?n+PGO:n} de ${PGT||tot||2}`,M,PH-M/2);
+  const aL=ampL(),ex=aL?34:0;if(aL){x.font=`26px ${FONT}`;x.fillStyle='#5b6470';x.fillText('Amplificador: '+aL,M,M+78+34)}
+  x.fillStyle='#111418';x.fillRect(M,M+104+ex,PW-2*M,3);
+  x.font=`20px ${FONT}`;x.fillStyle='#5b6470';HDX=ex;x.fillText(`Calculadora de impedância · página ${PGT?n+PGO:n} de ${PGT||tot||2}`,M,PH-M/2);
 }
 const toJpg=cv=>new Promise(r=>cv.toBlob(b=>b.arrayBuffer().then(a=>r(new Uint8Array(a))),'image/jpeg',0.85));
 function buildPdf(jpgs){
@@ -1451,11 +1470,11 @@ async function makePdf(){if(!st.multi&&!acOn())return buildPdf(await pdfPages())
 async function pdfPages(){
   const {img,W,H}=await svgImg();
   const a=document.createElement('canvas');a.width=PW;a.height=PH;let x=a.getContext('2d');pageHead(x,'Esquema de ligação',1);
-  const top=M+150,aw=PW-2*M,ah=PH-top-M-60,sc=Math.min(aw/W,ah/H,3);
+  const top=M+150+HDX,aw=PW-2*M,ah=PH-top-M-60,sc=Math.min(aw/W,ah/H,3);
   x.drawImage(img,(PW-W*sc)/2,top,W*sc,H*sc);
-  const b=document.createElement('canvas');b.width=PW;b.height=PH;x=b.getContext('2d');pageHead(x,'Descritivo da ligação',2);
+  const b=document.createElement('canvas');b.width=PW;b.height=PH;x=b.getContext('2d');pageHead(x,'Descritivo da ligação',2);const hx2=HDX;
   const S=sections(cur),tw=PW-2*M-30,bottom=PH-M-70;
-  const layout=(fs,draw)=>{let y=M+170;for(const s of S){x.font=`bold ${fs+6}px ${FONT}`;if(draw){x.fillStyle='#111418';x.fillText(s.h,M,y)}y+=fs*1.9;x.font=`${fs}px ${FONT}`;
+  const layout=(fs,draw)=>{let y=M+170+hx2;for(const s of S){x.font=`bold ${fs+6}px ${FONT}`;if(draw){x.fillStyle='#111418';x.fillText(s.h,M,y)}y+=fs*1.9;x.font=`${fs}px ${FONT}`;
     for(const t of s.L){const ls=wrap(x,t,tw);ls.forEach((l,i)=>{if(draw){if(i===0){x.fillStyle='#d7262e';x.beginPath();x.arc(M+8,y-fs*0.35,5,0,7);x.fill()}x.fillStyle='#111418';x.fillText(l,M+30,y)}y+=fs*1.45});y+=fs*0.35}y+=fs*0.9}return y};
   let fs=26;while(fs>15&&layout(fs,false)>bottom)fs--;layout(fs,true);
   x.font=`italic 20px ${FONT}`;x.fillStyle='#5b6470';x.fillText('Valores nominais. A impedância real dos alto-falantes varia com a frequência.',M,PH-M-20);
@@ -1480,23 +1499,23 @@ async function deliver(b,name,isImg){
 $('exp').onclick=()=>{const o=$('expMenu').hidden;$('expMenu').hidden=!o;$('exp').setAttribute('aria-expanded',o)};
 $('expJpg').onclick=async()=>{msg('Gerando imagem…');let b;try{b=await makeJpgAll()}catch(e){msg('Não foi possível gerar a imagem.');return}deliver(b,st.multi?`multiroom-${rooms().length}-salas.jpg`:acOn()?`${st.n}af-${groups().length}-canais.jpg`:fname('jpg'),true)};
 $('expPdf').onclick=async()=>{msg('Gerando PDF…');let b;try{b=await makePdf()}catch(e){msg('Não foi possível gerar o PDF.');return}deliver(b,st.multi?`multiroom-${rooms().length}-salas.pdf`:acOn()?`${st.n}af-${groups().length}-canais.pdf`:fname('pdf'),false)};
-const covSub=k=>`Espaço de ${fmt(k.L)} × ${fmt(k.W)} m · teto ${fmt(k.H)} m · ${k.n} alto-falante${k.n>1?'s':''}${mlabel()?` · ${mlabel()}`:''}`;
+const covSub=k=>`Espaço de ${fmt(k.L)} × ${fmt(k.W)} m · teto ${fmt(k.H)} m · ${k.n} alto-falante${k.n>1?'s':''}${spkL()?` · ${spkL()}`:''}`;
 const covName=ext=>`cobertura-${fmt(+st.cL)}x${fmt(+st.cW)}m-${st.n}af.${ext}`.replace(/,/g,'-');
 async function covEach(fn){const keep={cL:st.cL,cW:st.cW,cH:st.cH,n:st.n,cabD:st.cabD},R=rooms(),out=[];
   try{for(let i=0;i<R.length;i++){Object.assign(st,{cL:R[i].L,cW:R[i].W,cH:R[i].H,n:R[i].n,cabD:roomCab(R[i]).cabD});RL=`Sala ${i+1} · `;out.push(await fn(i))}}finally{RL='';PGO=0;PGT=0;Object.assign(st,keep);render()}return out}
 async function covJpgAll(){return st.multi?stackJpg(await covEach(()=>covJpg(true))):covJpg()}
 async function covPdfAll(){if(!st.multi)return buildPdf([await covPage()]);PGT=rooms().length;return buildPdf(await covEach(i=>{PGO=i;return covPage()}))}
 async function covJpg(lbl){const k=covCalc();if(k.err)throw 0;if(lbl){const c=document.createElement('canvas');drawCovTo(c,k,720,820,{ink:'#111418',bg:'#ffffff',fill:'#ffffff',dpr:2,gab:st.gab});
-  const o=document.createElement('canvas');o.width=c.width;o.height=c.height+120;const x=o.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,o.width,o.height);x.fillStyle='#111418';x.font='bold 56px Inter, Arial, sans-serif';x.fillText(RL.replace(/ · $/,''),28,70);x.font='26px Inter, Arial, sans-serif';x.fillStyle='#5b6470';x.fillText(covSub(k),28,108);x.drawImage(c,0,120);return new Promise(r=>o.toBlob(r,'image/jpeg',0.6))}const c=document.createElement('canvas');drawCovTo(c,k,720,820,{ink:'#111418',bg:'#ffffff',fill:'#ffffff',dpr:2,gab:st.gab});return new Promise(r=>c.toBlob(r,'image/jpeg',0.6))}
+  const o=document.createElement('canvas');o.width=c.width;const aL=ampL(),hh=120+(aL?34:0);o.height=c.height+hh;const x=o.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,o.width,o.height);x.fillStyle='#111418';x.font='bold 56px Inter, Arial, sans-serif';x.fillText(RL.replace(/ · $/,''),28,70);x.font='26px Inter, Arial, sans-serif';x.fillStyle='#5b6470';x.fillText(covSub(k),28,108);if(aL)x.fillText('Amplificador: '+aL,28,142);x.drawImage(c,0,hh);return new Promise(r=>o.toBlob(r,'image/jpeg',0.6))}const c=document.createElement('canvas');drawCovTo(c,k,720,820,{ink:'#111418',bg:'#ffffff',fill:'#ffffff',dpr:2,gab:st.gab});return new Promise(r=>c.toBlob(r,'image/jpeg',0.6))}
 async function covPage(){
   const k=covCalc();if(k.err)throw 0;
-  const a=document.createElement('canvas');a.width=PW;a.height=PH;const x=a.getContext('2d');pageHead(x,'Cobertura sonora',1,covSub(k),1);
+  const a=document.createElement('canvas');a.width=PW;a.height=PH;const x=a.getContext('2d');pageHead(x,'Cobertura sonora',1,covSub(k),1);const hx=HDX;
   const m=document.createElement('canvas');drawCovTo(m,k,(PW-2*M)/1.8,720/1.8,{ink:'#111418',bg:'#ffffff',fill:'#ffffff',dpr:1.8,gab:true});
-  x.drawImage(m,(PW-m.width)/2,M+128);
-  let y0=M+128+m.height+16;const tw=PW-2*M-30,bottom=PH-M-70;
+  x.drawImage(m,(PW-m.width)/2,M+128+hx);
+  let y0=M+128+hx+m.height+16;const tw=PW-2*M-30,bottom=PH-M-70;
   const cr=CRIT[st.crit]||CRIT.eq;
-  const S=[{h:'Dados do projeto',L:[`Espaço: ${fmt(k.L)} × ${fmt(k.W)} m, teto de ${fmt(k.H)} m, ouvinte a ${fmt(k.ear)} m`,`${k.n} alto-falante${k.n>1?'s':''}${mlabel()?` ${mlabel()}`:''} com ${fmt(k.ang)}° de cobertura · objetivo: ${cr[0].toLowerCase()}`]},
-    {h:'Gabarito de instalação',L:gabarito(k).map(l=>l.t)},{h:'Cobertura e recomendações',L:covLines(k).map(l=>l.t)}];
+  const S=[{h:'Dados do projeto',L:[`Espaço: ${fmt(k.L)} × ${fmt(k.W)} m, teto de ${fmt(k.H)} m, ouvinte a ${fmt(k.ear)} m`,`${k.n} alto-falante${k.n>1?'s':''}${spkL()?` ${spkL()}`:''} com ${fmt(k.ang)}° de cobertura · objetivo: ${cr[0].toLowerCase()}`]},
+    {h:'Gabarito de instalação',L:gabarito(k).map(l=>l.t)},{h:'Cobertura e recomendações',L:covLines(k).map(l=>l.t)}].map(s=>({h:s.h,L:s.L.map(anon).filter(Boolean)}));
   const layout=(fs,draw)=>{let y=y0;x.font=`${fs-4}px ${FONT}`;const leg='Cores: amarelo = mais forte, roxo = 12 dB abaixo ou menos · tracejado branco = cobertura na altura do ouvido · rosa = alinhamento e cotas';
     wrap(x,leg,tw+30).forEach(l=>{if(draw){x.fillStyle='#5b6470';x.fillText(l,M,y+fs*0.6)}y+=fs*1.2});y+=fs*0.9;
     for(const s of S){x.font=`bold ${fs+4}px ${FONT}`;if(draw){x.fillStyle='#111418';x.fillText(s.h,M,y+fs)}y+=fs*2;x.font=`${fs}px ${FONT}`;
@@ -1504,6 +1523,7 @@ async function covPage(){
   let fs=24;while(fs>13&&layout(fs,false)>bottom)fs--;layout(fs,true);
   return toJpg(a);
 }
+document.querySelectorAll('.hb').forEach(b=>b.onclick=()=>{st.hideB=!st.hideB;render()});
 $('gabTog').onclick=()=>{st.gab=!st.gab;render()};
 $('cexp').onclick=()=>{const o=$('cexpMenu').hidden;$('cexpMenu').hidden=!o;$('cexp').setAttribute('aria-expanded',o)};
 $('cexpJpg').onclick=async()=>{msg('Gerando imagem…');let b;try{b=await covJpgAll()}catch(e){msg('Não foi possível gerar a imagem.');return}deliver(b,st.multi?`cobertura-${rooms().length}-salas.jpg`:covName('jpg'),true)};
