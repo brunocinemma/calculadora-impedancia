@@ -106,7 +106,7 @@ select{width:100%;height:46px;font:16px inherit;font-family:inherit;color:var(--
 .ov img{max-width:100%;max-height:75vh;border-radius:8px;background:#fff}
 .ov[hidden]{display:none}
 .pw li.leveC{color:#8a6500}@media (prefers-color-scheme:dark){.pw li.leveC{color:#e6b84a}}
-.rstRow{display:flex;justify-content:flex-end;margin:-4px 0 4px}
+.projRow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 12px}.projRow .sp{flex:1 1 0}.projRow .chip{white-space:nowrap}
 .sysBtn{margin-top:12px;width:100%;padding:13px;border-radius:12px;border:0;background:var(--blue);color:#fff;font:inherit;font-weight:700;font-size:16px;cursor:pointer}
 .sysBox{margin-top:12px;display:grid;gap:10px}.sysHead{font-size:14px;color:var(--mute);margin:0}
 .sysCard{border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--box)}
@@ -150,11 +150,11 @@ li.caut{color:#8a6a00;font-weight:600}
 <nav class="tabs" role="tablist"><button type="button" role="tab" data-pg="imp" aria-selected="true">Impedância</button><button type="button" role="tab" data-pg="cov" aria-selected="false">Cobertura sonora</button></nav>
 </header>
 <main class="band" style="padding-top:8px">
+<div class="projRow"><button type="button" class="chip" id="pSave" title="Salvar projeto">💾 Salvar</button><button type="button" class="chip" id="pOpen" title="Abrir projeto">📂 Abrir</button><span class="unit" id="pName"></span><span class="sp"></span><button type="button" class="chip" id="rstBtn">↺ Resetar</button></div>
 <div id="pgImp">
 <div class="app">
 <section>
 <div class="panel">
-<div class="rstRow"><button type="button" class="chip" id="rstBtn">↺ Resetar</button></div>
 <div class="field"><span class="lbl">Caixas</span>
 <button type="button" class="tog" id="mTog" role="switch" aria-checked="false"><span class="sw"></span><span>Usar marca/modelo</span></button>
 <div id="arImp"></div>
@@ -1270,7 +1270,7 @@ function sysApply(i){const o=SYS.out[i];if(!o)return;st.useModel=true;st.brand=o
   if(o.x){const a=o.x.a;st.useAmp=true;st.ampB=a.b;st.ampM=a.isBr?a.base.m:a.m;st.bridge=!!a.isBr;st.ampRev=null;applyAmp();if(!st.multi){setK(o.x.k||1);useSels([].concat(o.x.sels||[]).join(','),o.x.k||1)}}
   SYS={applied:true};render();
   $('sysOut').innerHTML=`<div class="sysBox"><p class="sysHead" style="color:var(--ink)">✓ Sistema aplicado: ${o.m.b} ${o.m.m}${o.x?` com ${o.x.a.b} ${o.x.a.m}`:''}.</p><button type="button" class="chip" data-pgo="imp">Ver a ligação na aba Impedância</button></div>`}
-function render(){renderApp();document.querySelectorAll('.hb').forEach(b=>b.setAttribute('aria-pressed',!!st.hideB));
+function render(){renderApp();pjShowName();document.querySelectorAll('.hb').forEach(b=>b.setAttribute('aria-pressed',!!st.hideB));
   const list=configs();
   if(!list.find(c=>c.id===st.sel))st.sel=list[0].id;
   const c=list.find(c=>c.id===st.sel);cur=c;
@@ -1327,7 +1327,7 @@ $('audChips').onclick=e=>{const b=e.target.closest('[data-aud]');if(!b)return;st
 $('uniTog').onclick=()=>{st.uni=st.uni===false;render()};
 $('cMinus').onclick=()=>setN(st.n-1);$('cPlus').onclick=()=>setN(st.n+1);
 $('covRes').onclick=e=>{const k=covCalc();if(k.err)return;if(e.target.id==='useN'){const o=st.n;st.n=Math.min(32,k.Nrec);st.sel=null;st.ampRev=`de ${o} para ${st.n}`;st.ampRevR=-1;render();arModal()}if(e.target.id==='useD'){st.cabD=Math.round(Math.max(k.recDx,k.recDy)*10)/10;render()}};
-{const unb=e=>{if(!st.blank)return;const el=e.target;if(el.closest&&(el.closest('.mdl')||el.closest('.tabs')||el.closest('#rstBtn')))return;if(e.type==='click'&&!(el.closest&&el.closest('main button,main .chip')))return;st.blank=false;setTimeout(()=>{render();if(st.page==='cov')drawCov(covCalc())},0)};['input','change','click'].forEach(ev=>document.addEventListener(ev,unb,true))}
+{const unb=e=>{if(!st.blank)return;const el=e.target;if(el.closest&&(el.closest('.mdl')||el.closest('.tabs')||el.closest('#rstBtn')||el.closest('.projRow')))return;if(e.type==='click'&&!(el.closest&&el.closest('main button,main .chip')))return;st.blank=false;setTimeout(()=>{render();if(st.page==='cov')drawCov(covCalc())},0)};['input','change','click'].forEach(ev=>document.addEventListener(ev,unb,true))}
 const roc=new ResizeObserver(()=>{if(st.page==='cov')drawCov(covCalc())});roc.observe($('covFig'));
 $('sugAX').onclick=$('sugSX').onclick=()=>{st.sugCol=!st.sugCol;render()};
 $('mrTog').onclick=()=>{st.multi=!st.multi;if(st.multi){rooms();st.sugK=null}render()};
@@ -1524,6 +1524,75 @@ async function covPage(){
   return toJpg(a);
 }
 document.querySelectorAll('.hb').forEach(b=>b.onclick=()=>{st.hideB=!st.hideB;render()});
+
+// ---- Projetos: salvar / abrir ----
+const PJK='imp-proj',PJV=1;
+const pjList=()=>{try{return JSON.parse(localStorage.getItem(PJK)||'[]')}catch(e){return[]}};
+const pjStore=l=>{try{localStorage.setItem(PJK,JSON.stringify(l));return true}catch(e){return false}};
+const pjSnap=name=>{const s=JSON.parse(JSON.stringify(st));delete s.blank;delete s.projName;return {app:'calculadora-impedancia',v:PJV,name,date:new Date().toISOString(),st:s}};
+const pjSlug=n=>(n||'projeto').trim().replace(/[\\/:*?"<>|]+/g,'-').replace(/\s+/g,'-').slice(0,60)||'projeto';
+function pjLoad(p){
+  if(!p||p.app!=='calculadora-impedancia'||!p.st||typeof p.st!=='object')throw new Error('bad');
+  const keep=st.angOv;st={...JSON.parse(JSON.stringify(DEF)),...p.st};if(keep&&!st.angOv)st.angOv=keep;st.blank=false;st.projName=p.name||'';SYS=null;try{$('sysOut').innerHTML=''}catch(_){}try{$('rList').innerHTML=''}catch(_){}
+  render();scrollTo(0,0);
+}
+function pjShowName(){$('pName').textContent=st.projName?`Projeto: ${st.projName}`:''}
+function pjModal(build){
+  const d=document.createElement('div');d.className='mdl';d.setAttribute('role','dialog');d.setAttribute('aria-modal','true');
+  const box=document.createElement('div');box.style.cssText='background:var(--box,#fff);color:inherit;border-radius:16px;padding:18px;max-width:400px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,.4);max-height:86vh;overflow:auto';
+  d.appendChild(box);d.onclick=e=>{if(e.target===d)d.remove()};build(box,()=>d.remove());document.body.appendChild(d);return d;
+}
+const pjEl=(tag,txt,css,cls)=>{const e=document.createElement(tag);if(tag==='button')e.type='button';if(txt!=null)e.textContent=txt;if(css)e.style.cssText=css;if(cls)e.className=cls;return e};
+async function pjFileOut(blob,name){
+  if(dl){try{await dl.save({filename:name,data:blob});return 'Arquivo do projeto salvo.'}catch(e){if(e&&e.code==='declined')return 'Cancelado.'}}
+  if(window.showSaveFilePicker){try{const h=await showSaveFilePicker({suggestedName:name,id:'impedancia-projetos',types:[{description:'Projeto da calculadora',accept:{'application/json':['.json']}}]});const w=await h.createWritable();await w.write(blob);await w.close();return 'Arquivo do projeto salvo.'}catch(e){if(e&&e.name==='AbortError')return 'Cancelado.'}}
+  const file=new File([blob],name,{type:'application/json'});
+  if(matchMedia('(pointer:coarse)').matches&&navigator.canShare&&navigator.canShare({files:[file]})){
+    return await new Promise(res=>pjModal((box,close)=>{
+      box.appendChild(pjEl('p','Arquivo do projeto pronto','margin:0 0 4px;font-weight:700;font-size:17px'));
+      box.appendChild(pjEl('p','Escolha onde guardar: no celular (Downloads) ou compartilhar, por exemplo para o Google Drive ou WhatsApp.','margin:0 0 14px',"unit"));
+      const row=pjEl('div',null,'display:flex;flex-direction:column;gap:8px');
+      const bs=pjEl('button','Salvar no celular',null,'chip');bs.onclick=()=>{close();pjDown(blob,name);res('Arquivo do projeto salvo em Downloads.')};
+      const bh=pjEl('button','Compartilhar / Drive',null,'chip');bh.onclick=async()=>{close();try{await navigator.share({files:[file],title:name});res('')}catch(e){if(e&&e.name==='AbortError')res('');else{pjDown(blob,name);res('Arquivo do projeto salvo em Downloads.')}}};
+      const bc=pjEl('button','Cancelar',null,'chip');bc.onclick=()=>{close();res('Cancelado.')};
+      row.append(bs,bh,bc);box.appendChild(row)}));
+  }
+  pjDown(blob,name);return 'Arquivo do projeto salvo em Downloads.';
+}
+function pjDown(blob,name){try{const u=URL.createObjectURL(blob),l=document.createElement('a');l.href=u;l.download=name;document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(u),8000)}catch(e){}}
+$('pSave').onclick=()=>pjModal((box,close)=>{
+  box.appendChild(pjEl('p','Salvar projeto','margin:0 0 10px;font-weight:700;font-size:17px'));
+  const inp=pjEl('input',null,'width:100%;box-sizing:border-box;padding:12px;font:inherit;font-size:16px;border:1px solid var(--line,#ccc);border-radius:10px;background:var(--bg,#fff);color:inherit');inp.type='text';inp.placeholder='Nome do projeto';inp.value=st.projName||'';inp.maxLength=60;box.appendChild(inp);
+  const info=pjEl('p','Guarda tudo o que está preenchido: caixas, amplificador, cabo, salas, medidas e cobertura.','margin:10px 0 12px',"unit");box.appendChild(info);
+  const row=pjEl('div',null,'display:flex;flex-direction:column;gap:8px');
+  const nm=()=>(inp.value||'').trim();
+  const b1=pjEl('button','Salvar neste aparelho',null,'chip');
+  b1.onclick=()=>{const n=nm();if(!n){inp.focus();return}const l=pjList(),i=l.findIndex(x=>x.name===n),p=pjSnap(n);
+    const doIt=()=>{if(i>=0)l[i]=p;else l.unshift(p);if(!pjStore(l)){info.textContent='Não deu para salvar neste aparelho (sem espaço). Use "Baixar arquivo".';return}st.projName=n;save();pjShowName();close();msg('Projeto salvo neste aparelho.')};
+    if(i>=0&&!b1.dataset.ok){b1.dataset.ok=1;b1.textContent='Já existe: toque de novo para substituir';return}doIt()};
+  const b2=pjEl('button','Baixar arquivo (.json)',null,'chip');
+  b2.onclick=async()=>{const n=nm();if(!n){inp.focus();return}const p=pjSnap(n),blob=new Blob([JSON.stringify(p)],{type:'application/json'});st.projName=n;save();pjShowName();close();msg('');const r=await pjFileOut(blob,`${pjSlug(n)}.impedancia.json`);msg(r)};
+  const b3=pjEl('button','Cancelar',null,'chip');b3.onclick=close;
+  row.append(b1,b2,b3);box.appendChild(row);setTimeout(()=>inp.focus(),50)});
+$('pOpen').onclick=()=>pjModal((box,close)=>{
+  box.appendChild(pjEl('p','Abrir projeto','margin:0 0 4px;font-weight:700;font-size:17px'));
+  box.appendChild(pjEl('p','Abrir troca o projeto atual pelo escolhido. Se quiser guardar o atual, salve antes.','margin:0 0 12px',"unit"));
+  const l=pjList(),wrap=pjEl('div',null,'display:flex;flex-direction:column;gap:8px;margin-bottom:12px');
+  if(!l.length)wrap.appendChild(pjEl('p','Nenhum projeto salvo neste aparelho.','margin:0',"unit"));
+  l.forEach(p=>{const r=pjEl('div',null,'display:flex;gap:8px;align-items:center');
+    const b=pjEl('button',null,'flex:1;text-align:left;min-width:0',"chip");b.appendChild(pjEl('b',p.name,'display:block;overflow:hidden;text-overflow:ellipsis'));b.appendChild(pjEl('small',new Date(p.date).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}),'opacity:.7'));
+    b.onclick=()=>{try{pjLoad(p);close();msg('Projeto aberto.')}catch(e){msg('Projeto inválido.')}};
+    const x=pjEl('button','🗑',null,'chip');x.setAttribute('aria-label','Apagar '+p.name);x.onclick=()=>{if(x.dataset.ok){const nl=pjList().filter(q=>q.name!==p.name);pjStore(nl);r.remove();return}x.dataset.ok=1;x.textContent='Apagar?'};
+    r.append(b,x);wrap.appendChild(r)});
+  box.appendChild(wrap);
+  const f=pjEl('button','Abrir de um arquivo…',null,'chip');
+  const fi=document.createElement('input');fi.type='file';fi.accept='.json,application/json,.impedancia';fi.style.display='none';
+  const fromText=async txt=>{try{pjLoad(JSON.parse(txt));close();msg('Projeto aberto.')}catch(e){msg('Esse arquivo não é um projeto da calculadora.')}};
+  fi.onchange=async()=>{const file=fi.files&&fi.files[0];if(file)fromText(await file.text())};
+  f.onclick=async()=>{if(window.showOpenFilePicker){try{const [h]=await showOpenFilePicker({id:'impedancia-projetos',types:[{description:'Projeto da calculadora',accept:{'application/json':['.json']}}]});fromText(await (await h.getFile()).text());return}catch(e){if(e&&e.name==='AbortError')return}}fi.click()};
+  const c=pjEl('button','Cancelar',null,'chip');c.onclick=close;
+  const row=pjEl('div',null,'display:flex;flex-direction:column;gap:8px');row.append(f,c);box.append(row,fi)});
+
 $('gabTog').onclick=()=>{st.gab=!st.gab;render()};
 $('cexp').onclick=()=>{const o=$('cexpMenu').hidden;$('cexpMenu').hidden=!o;$('cexp').setAttribute('aria-expanded',o)};
 $('cexpJpg').onclick=async()=>{msg('Gerando imagem…');let b;try{b=await covJpgAll()}catch(e){msg('Não foi possível gerar a imagem.');return}deliver(b,st.multi?`cobertura-${rooms().length}-salas.jpg`:covName('jpg'),true)};
