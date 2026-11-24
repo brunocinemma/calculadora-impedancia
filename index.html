@@ -213,7 +213,8 @@ li.caut{color:#8a6a00;font-weight:600}
 <div id="cabOne"><label for="cabL" class="lbl" style="font-weight:500">Distância do amplificador até o primeiro alto-falante</label>
 <div class="range"><input type="number" id="cabL" min="0" step="0.5" placeholder="m" style="width:110px"><span class="unit">m</span></div>
 <label for="cabD" class="lbl" style="font-weight:500;margin-top:12px">Distância entre os alto-falantes</label>
-<div class="range"><input type="number" id="cabD" min="0" step="0.5" placeholder="m" style="width:110px"><span class="unit">m</span></div>
+ <div class="range"><input type="number" id="cabD" min="0" step="0.5" placeholder="m" style="width:110px"><span class="unit">m</span><button type="button" class="chip" id="cabSugB" hidden></button></div>
+<p class="unit" id="cabSug" style="margin:6px 0 0" hidden></p>
 <p class="calc" id="cabTot" style="margin:10px 0 0"></p></div>
 <div id="cabRooms" class="rlist" hidden></div>
 <span class="lbl" style="font-weight:500;margin-top:12px">Bitola do cabo</span>
@@ -276,6 +277,7 @@ let st={useAmp:false,ampB:'',ampM:'',flex:false,pch4:'',pch2:'',mount:'embutir',
 const DEF=JSON.parse(JSON.stringify(st));
 try{const s=JSON.parse(localStorage.getItem('imp-calc2')||'null');if(s)st={...st,...s}}catch(e){}
 if(st.res===undefined)st.res=true;if(st.gab===undefined)st.gab=true;if(st.mount===undefined){st.mount='embutir';st.hs=2.2;st.uni=true}if(st.cL===undefined){st.page='imp';st.cL=8;st.cW=4;st.cH=2.8;st.ear=1.2;st.cAng=90;st.crit='eq';st.spc='auto'}if(st.vline===undefined){st.trafo=false;st.vline=70;st.tap=10}if(st.cabA===undefined){st.cabL=20;st.cabD=2.5;st.cabA=1.5}if(st.pspk===undefined)st.pspk=50;if(st.pch===undefined)st.pch=100;
+if(Array.isArray(st.CG)&&!st.cgv){st.CG.forEach(g=>{delete g.cabL;delete g.cabD});st.cgv=1}
 const save=()=>{try{localStorage.setItem('imp-calc2',JSON.stringify(st))}catch(e){}};
 const fmt=v=>(Math.round(v*100)/100).toLocaleString('pt-BR');
 
@@ -705,12 +707,14 @@ function cable(c){
 }
 function cableLines(c){
   const k=cable(c);if(!k)return [];const pc=pcOf(c),out=[];
+  const gl=(st.multi||acOn())?PROJN:0;
   out.push({t:`Cabo ${mm(k.A)}: ${fmt(k.L)} m no total${k.d&&st.n>1?` (${fmt(k.first)} m até o primeiro + ${st.n-1} × ${fmt(k.d)} m entre eles)`:' até o alto-falante'}`});
   out.push({t:`Resistência do cabo (ida e volta): ${fmt(k.R)} Ω · a impedância sobe de ${fmt(c.zt)} Ω para ${fmt(k.Zv)} Ω`});
   const lv=k.loss<=0.05?'ok':k.loss<=0.11?'mid':'warn';
   out.push({t:`Dissipação no cabo: ${pc?`cerca de ${fmt(pc*k.loss)} W de ${fmt(pc)} W, `:''}${fmt(k.loss*100)}% da potência (${fmt(k.db)} dB) · ${lv==='ok'?'ótimo':lv==='mid'?'aceitável':'alta'}`,cls:lv==='warn'?'warn':''});
   if(lv!=='ok'&&k.best&&k.best>k.A)out.push({t:`Para ficar abaixo de 5% de perda, use cabo ${mm(k.best)}.`,cls:lv==='warn'?'warn':''});
   if(lv!=='ok'&&!k.best)out.push({t:'Mesmo com 2 × 6 mm² a perda passa de 5%. Considere aproximar o amplificador ou usar linha de 70/100 V.',cls:'warn'});
+  if(gl>1&&PROJTOT)out.push({t:`Total geral de cabo do projeto (${gl} ${st.multi?'salas':'canais'}): ${fmt(PROJTOT)} m`});
   return out;
 }
 function finalHTML(c){const k=cable(c),pc=pcOf(c);if(!k||!pc)return '';
@@ -1187,21 +1191,24 @@ function renderTrafo(){
   $('opts').innerHTML='';
 }
 const resHTML=c=>`<div class="rhead"><div class="big">${fmt(c.zt+cabR())} Ω</div><span class="tag ${c.st}">${TAG[c.st]}</span>${ampTag(c)}</div>${(g=>g?`<div class="caution"><b>⚠ Reduza o nível do amplificador</b>${gainTxt(g)}</div>`:'')(gainAdv(c))}<p class="cname">${mlabel()?`${mlabel()}: `:''}${c.name}</p><p class="calc">${c.calc}${cabR()?` · com o cabo: ${fmt(c.zt)} + ${fmt(cabR())} = ${fmt(c.zt+cabR())} Ω`:''}</p>${finalHTML(c)}${powerHTML(c)}`;
-function sugD(r){if(r.n<2||!(+r.L>0&&+r.W>0))return 0;const P=(st.mount==='sobrepor'?wallLayout(r.n,+r.L,+r.W,st.uni!==false):layout(r.n,+r.L,+r.W,'auto',0)).P;let t=0;for(let i=1;i<P.length;i++)t+=Math.hypot(P[i][0]-P[i-1][0],P[i][1]-P[i-1][1]);return Math.round(t/(P.length-1)*10)/10}
+function sugD(r){if(r.n<2||!(+r.L>0&&+r.W>0))return 0;let d;if(st.mount==='sobrepor'){const l=wallLayout(r.n,+r.L,+r.W,st.uni!==false);d=st.uni!==false?l.dx:l.dy}else{const l=layout(r.n,+r.L,+r.W,'auto',0);d=Math.max(l.dx,l.dy)}return Math.round(d*10)/10}
 const hasV=v=>v!==''&&v!=null;
-function roomCab(r){return {cabL:hasV(r.cabL)?r.cabL:st.cabL,cabD:hasV(r.cabD)?r.cabD:sugD(r)}}
+function roomCab(r){return {cabL:hasV(r.cabL)?r.cabL:st.cabL,cabD:hasV(r.cabD)?r.cabD:(r.isCh?st.cabD:sugD(r))}}
+const grpTot=r=>{const c=roomCab(r);return (+c.cabL||0)?(+c.cabL)+Math.max(0,r.n-1)*(+c.cabD||0):0};
+const cabList=()=>st.multi?rooms():(acOn()?chGroups():[]);
+let PROJTOT=0,PROJN=0;const projCab=()=>{const L=cabList();PROJN=L.length;PROJTOT=L.reduce((s,r)=>s+grpTot(r),0);return PROJTOT};
 function roomPick(R){Object.assign(st,roomCab(R));st.n=st.multi?R.n/(R.k||1):R.n;st.sel=R.sel;const list=configs();if(!list.find(x=>x.id===st.sel))st.sel=list[0].id;R.sel=st.sel;return {list,c:list.find(x=>x.id===st.sel)}}
 function ampChk(){const a=curAmp(),R=rooms(),nr=R.length;if(!a)return '';const ch=chOf(a),u=R.reduce((s,r)=>s+(r.k||1),0);return ch>=nr?`<li class="ok">${a.b} ${a.m}: ${ch} canais para ${nr} salas${u>nr?`, ${u} em uso (as salas maiores recebem mais de um canal)`:', um canal por sala'}${ch>u?` (sobra${ch-u>1?"m":""} ${ch-u})`:''}.</li>`:`<li class="warn">${a.b} ${a.m} tem ${ch} ${ch>1?'canais':'canal'} para ${nr} salas: falta${nr-ch>1?'m':''} ${nr-ch} ${nr-ch>1?'canais':'canal'}. Use um multicanal maior ou mais um amplificador.</li>`}
 const acOn=()=>!!st.allCh&&!st.multi;
 const acCh=()=>{const a=curAmp();return a?chOf(a):Math.max(1,Math.min(16,+st.acMan||2))};
 function chGroups(){const k=Math.max(1,Math.min(acCh(),st.n)),b=Math.floor(st.n/k),x=st.n%k;if(!Array.isArray(st.CG))st.CG=[];
-  for(let i=0;i<k;i++){const n=b+(i<x?1:0);if(!st.CG[i])st.CG[i]={};if(st.CG[i].n!==n){st.CG[i].n=n;st.CG[i].sel=null}st.CG[i].cabL=st.cabL;st.CG[i].cabD=st.cabD;st.CG[i].lbl=`Canal ${i+1}`}return st.CG.slice(0,k)}
+  for(let i=0;i<k;i++){const n=b+(i<x?1:0);if(!st.CG[i])st.CG[i]={};if(st.CG[i].n!==n){st.CG[i].n=n;st.CG[i].sel=null}st.CG[i].isCh=true;st.CG[i].lbl=`Canal ${i+1}`}return st.CG.slice(0,k)}
 function roomKsCur(){const R=rooms(),a=curAmp(),pk=+st.pspk||0;let ks=R.map(()=>1);
   if(a&&!st.trafo&&pk&&chOf(a)>R.length&&R.every(r=>r.n>0)){const e=mrEval(avOf(a),st.z,pk,st.min,st.max,chOf(a));if(e)ks=e.ks}return ks}
 function groups(){if(!st.multi)return acOn()?chGroups():[];const R=rooms(),ks=roomKsCur();return R.map((r,i)=>(r.k=ks[i],r.lbl=r.k>1?`Sala ${i+1} (${r.k} canais × ${r.n/r.k} caixas)`:`Sala ${i+1}`,r))}
 const chTxt=(r,i)=>{if(!st.multi)return `canal ${i+1} do amplificador`;const R=rooms();let c0=1;for(let j=0;j<i;j++)c0+=R[j].k||1;const k=r.k||1;return k>1?`canais ${c0} a ${c0+k-1} do amplificador, ${r.n/k} caixas em cada: ligue igual nos ${k} canais`:`canal ${c0} do amplificador`};
 function renderRooms(){
-  const keep={n:st.n,sel:st.sel,cur,cabL:st.cabL,cabD:st.cabD},R=groups(),ac=acOn();let html='',sum='',need=false;
+  projCab();const keep={n:st.n,sel:st.sel,cur,cabL:st.cabL,cabD:st.cabD},R=groups(),ac=acOn();let html='',sum='',need=false;
   R.forEach((r,i)=>{const {list,c}=roomPick(r);need=need||st.need;let res,fig,op='';
     if(st.trafo){renderTrafo();res=$('result').innerHTML;fig=$('fig').innerHTML;sum+=`<li><b>${r.lbl}</b> · ${r.n} alto-falante${r.n>1?'s':''} · linha ${st.vline} V · ${fmt(trafo().P)} W</li>`}
     else{res=resHTML(c);draw(c);fig=$('fig').innerHTML;op=`<div class="opts">${list.map(x=>`<button type="button" class="opt" data-room="${i}" data-id="${x.id}" aria-pressed="${x.id===st.sel}"><span>${x.name}<small>${TAG[x.st]}${x.r?' · com resistor':''}</small></span><b>${fmt(x.zt+cabR())} Ω</b></button>`).join('')}</div>`;
@@ -1209,7 +1216,7 @@ function renderRooms(){
     html+=`<section class="room"><h2 class="roomH">${r.lbl}</h2><p class="roomS">${r.n} alto-falante${r.n>1?'s':''}${mlabel()?` · ${mlabel()}`:''} · ${chTxt(r,i)}</p><div class="roomGrid"><div class="scroll">${fig}</div><div class="result">${res}</div></div>${op?`<p class="lbl" style="margin:12px 0 0">Opções de ligação · ${r.lbl.toLowerCase()}</p>${op}`:''}</section>`});
   st.n=keep.n;st.sel=keep.sel;cur=keep.cur;st.cabL=keep.cabL;st.cabD=keep.cabD;st.need=need;
   $('roomsOut').innerHTML=html;
-  $('fig').innerHTML=`<div class="result" style="position:static"><p class="cname" style="margin-top:0">${ac?`Resumo dos ${R.length} canais`:`Resumo das ${R.length} salas`}</p><ul class="msum">${sum}${ac?'':ampChk()}</ul><p class="unit" style="margin:8px 0 0">${ac?'Esquema e descritivo de cada canal logo abaixo.':'Esquema e descritivo de cada sala logo abaixo.'}</p></div>`;
+  $('fig').innerHTML=`<div class="result" style="position:static"><p class="cname" style="margin-top:0">${ac?`Resumo dos ${R.length} canais`:`Resumo das ${R.length} salas`}</p><ul class="msum">${sum}${ac?'':ampChk()}${PROJTOT?`<li><b>Total geral de cabo do projeto:</b> ${fmt(PROJTOT)} m</li>`:''}</ul><p class="unit" style="margin:8px 0 0">${ac?'Esquema e descritivo de cada canal logo abaixo.':'Esquema e descritivo de cada sala logo abaixo.'}</p></div>`;
 }
 function renderMr(){
   const on=!!st.multi,R=on?rooms():[];
@@ -1217,13 +1224,15 @@ function renderMr(){
   if(on){if(document.activeElement!==$('nr'))$('nr').value=R.length;
     if(!$('rList').contains(document.activeElement))$('rList').innerHTML=R.map((r,i)=>`<div class="rrow"><b>Sala ${i+1}</b><div class="step"><button type="button" data-rm="${i}" aria-label="Menos">−</button><input type="number" min="1" max="32" value="${r.n}" data-rn="${i}" inputmode="numeric"><button type="button" data-rp="${i}" aria-label="Mais">+</button></div><span class="unit">alto-falantes</span></div>`).join('');
     if(!$('covRIn').contains(document.activeElement))$('covRIn').innerHTML=R.map((r,i)=>`<div class="rrow"><b>Sala ${i+1}</b><span class="unit">${r.n} alto-falante${r.n>1?'s':''}</span><div class="rdims"><label>Comprimento<input type="number" min="0" step="0.5" value="${r.L||''}" data-rf="L" data-ri="${i}" inputmode="decimal"></label><label>Largura<input type="number" min="0" step="0.5" value="${r.W||''}" data-rf="W" data-ri="${i}" inputmode="decimal"></label><label>Altura<input type="number" min="0" step="0.1" value="${r.H||''}" data-rf="H" data-ri="${i}" inputmode="decimal"></label></div></div>`).join('')}
-  $('cabOne').hidden=on;$('cabRooms').hidden=!on;
-  if(on&&!$('cabRooms').contains(document.activeElement))$('cabRooms').innerHTML=R.map((r,i)=>{const sd=sugD(r),c=roomCab(r),tot=(+c.cabL||0)?(+c.cabL)+Math.max(0,r.n-1)*(+c.cabD||0):0;
-    return `<div class="rrow" style="flex-direction:column;align-items:stretch;gap:4px"><b>Sala ${i+1} · ${r.n} alto-falante${r.n>1?'s':''}</b>
+  const acx=acOn(),cg=on||acx;$('cabOne').hidden=cg;$('cabRooms').hidden=!cg;
+  if(cg){const CL=on?R:chGroups();
+    if(!$('cabRooms').contains(document.activeElement))$('cabRooms').innerHTML=CL.map((r,i)=>{const sd=r.isCh?0:sugD(r),nm=r.isCh?`Canal ${i+1}`:`Sala ${i+1}`;
+    return `<div class="rrow" style="flex-direction:column;align-items:stretch;gap:4px"><b>${nm} · ${r.n} alto-falante${r.n>1?'s':''}</b>
 <label class="unit">Distância do amplificador até o primeiro alto-falante<div class="range"><input type="number" min="0" step="0.5" value="${hasV(r.cabL)?r.cabL:(st.cabL||'')}" data-cl="${i}" placeholder="m" style="width:110px" inputmode="decimal"><span class="unit">m</span></div></label>
-${r.n>1?`<label class="unit">Distância entre os alto-falantes<div class="range"><input type="number" min="0" step="0.1" value="${hasV(r.cabD)?r.cabD:''}" data-cd="${i}" placeholder="${sd?fmt(sd):'m'}" style="width:110px" inputmode="decimal"><span class="unit">m</span>${hasV(r.cabD)&&sd&&+r.cabD!==sd?`<button type="button" class="chip" data-cs="${i}">Usar sugestão: ${fmt(sd)} m</button>`:''}</div></label>
-<span class="unit">${hasV(r.cabD)?'Valor digitado por você.':sd?`Sugestão pela cobertura da sala (${fmt(+r.L||0)} × ${fmt(+r.W||0)} m): ${fmt(sd)} m.`:'Informe o tamanho da sala na aba Cobertura para receber a sugestão.'}</span>`:''}
-<span class="calc">Distância total: <b>${fmt(tot)} m</b></span></div>`}).join('');
+${r.n>1?`<label class="unit">Distância entre os alto-falantes<div class="range"><input type="number" min="0" step="0.1" value="${hasV(r.cabD)?r.cabD:''}" data-cd="${i}" placeholder="${sd?fmt(sd):(r.isCh&&+st.cabD?fmt(+st.cabD):'m')}" style="width:110px" inputmode="decimal"><span class="unit">m</span>${!r.isCh&&hasV(r.cabD)&&sd&&+r.cabD!==sd?`<button type="button" class="chip" data-cs="${i}">Usar sugestão: ${fmt(sd)} m</button>`:''}</div></label>
+<span class="unit">${hasV(r.cabD)?'Valor digitado por você.':r.isCh?'Se ficar vazio, vale a distância da seção de cabo comum acima.':sd?`Sugestão pela cobertura da sala (${fmt(+r.L||0)} × ${fmt(+r.W||0)} m): ${fmt(sd)} m.`:'Informe o tamanho da sala na aba Cobertura para receber a sugestão.'}</span>`:''}
+<span class="calc">Distância total: <b data-ct="${i}"></b></span></div>`}).join('')+`<p class="calc" style="margin:6px 0 0">Total geral de cabo do projeto: <b id="cabAll"></b></p>`;
+    CL.forEach((r,i)=>{const e=$('cabRooms').querySelector(`[data-ct="${i}"]`);if(e)e.textContent=fmt(grpTot(r))+' m'});const ea=$('cabAll');if(ea)ea.textContent=fmt(projCab())+' m'}
   $('covRIn').hidden=!on;$('cDims').hidden=on;
   const ac=acOn(),g=on||ac;$('roomsOut').hidden=!g;$('result').hidden=g;$('optTitle').hidden=g;$('opts').hidden=g;
   $('acTog').setAttribute('aria-checked',!!st.allCh&&!on);$('acTog').disabled=on;$('acOpts').hidden=!(st.allCh||on);$('acManBox').hidden=on||!!curAmp();
@@ -1266,7 +1275,7 @@ function sysHTML(){if(!SYS)return '';if(SYS.msg)return `<div class="sysBox"><p c
     <button type="button" class="sysUse" data-sys="${i}">Usar este sistema (${tot} caixas)</button></div>`}).join('')}
   <p class="unit" style="margin:0">Potência estimada com sensibilidade típica de 87 dB (as fichas não trazem esse dado). Depois de aplicar, você pode mudar a quantidade e o modelo normalmente.</p></div>`}
 function sysApply(i){const o=SYS.out[i];if(!o)return;st.useModel=true;st.brand=o.m.b;st.model=o.m.m;applyModel();st.cAng=o.ang;st.allCh=false;st.sugK=null;st.sel=null;
-  if(st.multi){const R=rooms();R.forEach((r,j)=>{r.n=o.ns[j].N;r.cabD=''});$('rList').innerHTML=''}else{st.n=o.ns[0].N;const k=withSt({cAng:o.ang},()=>covCalc());if(!k.err&&!k.wall)st.cabD=+fmt(Math.max(k.recDx,k.recDy)).replace(',','.')}
+  if(st.multi){const R=rooms();R.forEach((r,j)=>{r.n=o.ns[j].N;r.cabD=''});$('rList').innerHTML=''}else{st.n=o.ns[0].N;const sd=sugD({n:st.n,L:+st.cL,W:+st.cW});if(sd>0)st.cabD=sd}
   if(o.x){const a=o.x.a;st.useAmp=true;st.ampB=a.b;st.ampM=a.isBr?a.base.m:a.m;st.bridge=!!a.isBr;st.ampRev=null;applyAmp();if(!st.multi){setK(o.x.k||1);useSels([].concat(o.x.sels||[]).join(','),o.x.k||1)}}
   SYS={applied:true};render();
   $('sysOut').innerHTML=`<div class="sysBox"><p class="sysHead" style="color:var(--ink)">✓ Sistema aplicado: ${o.m.b} ${o.m.m}${o.x?` com ${o.x.a.b} ${o.x.a.m}`:''}.</p><button type="button" class="chip" data-pgo="imp">Ver a ligação na aba Impedância</button></div>`}
@@ -1287,6 +1296,7 @@ function render(){renderApp();pjShowName();document.querySelectorAll('.hb').forE
   $('resHelp').textContent=st.res?'O resistor ocupa o lugar do alto-falante que falta e todos tocam com o mesmo volume.':`Ligação comum com ${st.n} alto-falantes, sem resistor: um deles toca mais alto que os outros.`;
   $('cabChips').innerHTML=CABS.map(a=>`<button type="button" class="chip" data-a="${a}" aria-pressed="${a===+st.cabA}">${mm(a)}</button>`).join('');
   if(document.activeElement!==$('cabL'))$('cabL').value=st.cabL||'';
+  {const sd=(!st.multi&&!acOn())?sugD({n:st.n,L:+st.cL,W:+st.cW}):0,diff=sd>0&&+st.cabD!==sd;$('cabSug').hidden=!sd;$('cabSug').textContent=sd?`Sugestão da aba Cobertura para ${fmt(st.n)} alto-falantes em ${fmt(+st.cL)} × ${fmt(+st.cW)} m: ${fmt(sd)} m entre eles.`:'';$('cabSugB').hidden=!diff;$('cabSugB').textContent=`Usar ${fmt(sd)} m`;$('cabSugB').dataset.v=sd}
   $('cabTot').innerHTML=+st.cabL?`Distância total: <b>${fmt(cabTot())} m</b>`:'';if(document.activeElement!==$('cabD'))$('cabD').value=st.cabD||'';
   $('n').value=st.n;$('min').value=st.min;$('max').value=st.max;
   if(document.activeElement!==$('pspk'))$('pspk').value=st.pspk||'';
@@ -1312,6 +1322,7 @@ $('max').onchange=e=>{const v=parseFloat(e.target.value);if(v>0){st.max=Math.max
 $('resTog').onclick=()=>{st.res=!st.res;if(st.sel)st.sel=st.res?st.sel.replace(/m$/,'r'):st.sel.replace(/r$/,'m');render()};
 $('cabL').oninput=e=>{st.cabL=e.target.value;render()};
 $('cabD').oninput=e=>{st.cabD=e.target.value;render()};
+$('cabSugB').onclick=()=>{st.cabD=+$('cabSugB').dataset.v||'';render()};
 $('cabChips').onclick=e=>{const b=e.target.closest('[data-a]');if(b){st.cabA=+b.dataset.a;render()}};
 document.addEventListener('click',e=>{const b=e.target.closest('[data-arv]');if(!b)return;if(b.dataset.arv==='x'){st.ampRev=null;render();return}
   st.page='imp';st.sugS=false;st.sugA=true;st.sugCol=false;render();setTimeout(()=>$('sugATog').scrollIntoView({block:'start',behavior:'smooth'}),50)});
@@ -1336,9 +1347,9 @@ $('rMinus').onclick=()=>setNr((+st.nr||2)-1);$('rPlus').onclick=()=>setNr((+st.n
 const setRn=(i,v)=>{const R=rooms();R[i].n=Math.max(1,Math.min(32,Math.round(v)||1));R[i].sel=null;$('rList').innerHTML='';$('covRIn').innerHTML='';$('cabRooms').innerHTML='';render()};
 $('rList').onclick=e=>{const m=e.target.closest('[data-rm]'),p=e.target.closest('[data-rp]');if(m)setRn(+m.dataset.rm,rooms()[+m.dataset.rm].n-1);if(p)setRn(+p.dataset.rp,rooms()[+p.dataset.rp].n+1)};
 $('rList').onchange=e=>{const t=e.target.closest('[data-rn]');if(t)setRn(+t.dataset.rn,+t.value)};
-$('cabRooms').oninput=e=>{const a=e.target.closest('[data-cl]'),b=e.target.closest('[data-cd]');const R=rooms();if(a)R[+a.dataset.cl].cabL=a.value;if(b)R[+b.dataset.cd].cabD=b.value;render()};
+$('cabRooms').oninput=e=>{const a=e.target.closest('[data-cl]'),b=e.target.closest('[data-cd]');const R=cabList();if(a)R[+a.dataset.cl].cabL=a.value;if(b)R[+b.dataset.cd].cabD=b.value;render()};
 $('cabRooms').onchange=()=>{$('cabRooms').innerHTML='';render()};
-$('cabRooms').onclick=e=>{const b=e.target.closest('[data-cs]');if(b){rooms()[+b.dataset.cs].cabD='';$('cabRooms').innerHTML='';render()}};
+$('cabRooms').onclick=e=>{const b=e.target.closest('[data-cs]');if(b){cabList()[+b.dataset.cs].cabD='';$('cabRooms').innerHTML='';render()}};
 $('covRIn').oninput=e=>{const t=e.target.closest('[data-rf]');if(t){rooms()[+t.dataset.ri][t.dataset.rf]=t.value;$('cabRooms').innerHTML='';render()}};
 $('roomsOut').onclick=e=>{const b=e.target.closest('[data-room]');if(b){groups()[+b.dataset.room].sel=b.dataset.id;render()}};
 $('acTog').onclick=()=>{st.allCh=!st.allCh;st.sugK=null;render()};
@@ -1459,7 +1470,7 @@ function buildPdf(jpgs){
   push(`trailer\n<< /Size ${total} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`);
   return new Blob(parts,{type:'application/pdf'});
 }
-async function roomEach(fn){const keep={n:st.n,sel:st.sel,cur,cabL:st.cabL,cabD:st.cabD},R=groups(),out=[];
+async function roomEach(fn){projCab();const keep={n:st.n,sel:st.sel,cur,cabL:st.cabL,cabD:st.cabD},R=groups(),out=[];
   try{for(let i=0;i<R.length;i++){const {c}=roomPick(R[i]);if(st.trafo)renderTrafo();else{cur=c;draw(c)}RL=`${R[i].lbl} · `;out.push(await fn(i))}}
   finally{RL='';PGO=0;PGT=0;st.n=keep.n;st.sel=keep.sel;cur=keep.cur;st.cabL=keep.cabL;st.cabD=keep.cabD;render()}return out}
 async function stackJpg(blobs){const ims=[];for(const b of blobs){const im=new Image();im.src=URL.createObjectURL(b);await im.decode();ims.push(im)}
